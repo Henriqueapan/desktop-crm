@@ -6,9 +6,12 @@ import com.pancotti.henrique.sales.management.model.ClientModel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Objects;
@@ -20,7 +23,9 @@ public class ClientForm {
     private JFrame frame;
     private JPanel main;
     private JLabel headerStringLabel;
-    private JTabbedPane tabbedPane1;
+    private JTabbedPane tabbedPane;
+    private JPanel cadastroPanel;
+    private JPanel cadastroInputPanel;
     private JTextField codigoTxt;
     private JLabel codigoLabel;
     private JTextField nomeTxt;
@@ -50,11 +55,37 @@ public class ClientForm {
     private JLabel rgLabel;
     private JFormattedTextField cpfTxt;
     private JLabel cpfLabel;
+    private JPanel saveButtonPanel;
     private JButton saveButton;
 
     private JTextField consultaNomeTxt;
     private JButton consultaPesquisarButton;
     private JTable consultaTable;
+
+    private static final DocumentFilter digitsOnlyDocumentFilter = new DocumentFilter() {
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
+            throws BadLocationException
+        {
+            if (string.matches("\\d+")) {  // Verifica se todos os caracteres são dígitos
+                super.insertString(fb, offset, string, attr);
+            }
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
+            throws BadLocationException
+        {
+            if (text.matches("\\d+")) {  // Verifica se todos os caracteres são dígitos
+                super.replace(fb, offset, length, text, attrs);
+            }
+        }
+
+        @Override
+        public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+            super.remove(fb, offset, length);
+        }
+    };
 
     private class SaveButtonActionListener implements ActionListener {
         @Override
@@ -125,25 +156,26 @@ public class ClientForm {
         this.main.setMaximumSize(dimension);
     }
 
-    private static void setFontForContainerChildren(Container container, Font font) {
-        Arrays.stream(container.getComponents()).forEach(component -> {
+    private static void setFontForChildComponents(Container parentContainer, Font font) {
+        Arrays.stream(parentContainer.getComponents()).forEach(component -> {
             component.setFont(font);
 
             if (component instanceof Container) {
-                setFontForContainerChildren((Container) component, font);
+                setFontForChildComponents((Container) component, font);
             }
         });
     }
 
     public void setFormFont(Font font) {
-        setFontForContainerChildren(main, font);
+        setFontForChildComponents(main, font);
     }
 
     public ClientForm() {
         // Inicializar componentes
         main = new JPanel(new BorderLayout());
-        tabbedPane1 = new JTabbedPane();
-        JPanel cadastroPanel = new JPanel(new GridBagLayout());
+        tabbedPane = new JTabbedPane();
+        cadastroPanel = new JPanel(new BorderLayout());
+        cadastroInputPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.fill = GridBagConstraints.NONE;
@@ -160,10 +192,10 @@ public class ClientForm {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        cadastroPanel.add(codigoLabel, gbc);
+        cadastroInputPanel.add(codigoLabel, gbc);
         gbc.anchor = GridBagConstraints.LINE_START;
         gbc.gridx = 1;
-        cadastroPanel.add(codigoTxt, gbc);
+        cadastroInputPanel.add(codigoTxt, gbc);
 
         // Segunda linha: Nome e Pesquisar
         nomeLabel = new JLabel("Nome:");
@@ -175,15 +207,15 @@ public class ClientForm {
 
         gbc.gridy = 1;
         gbc.gridx = 0;
-        cadastroPanel.add(nomeLabel, gbc);
+        cadastroInputPanel.add(nomeLabel, gbc);
 
         gbc.gridx = 1;
 //        gbc.weightx = 1.0;
-        cadastroPanel.add(nomeTxt, gbc);
+        cadastroInputPanel.add(nomeTxt, gbc);
 
         gbc.gridx = 2;
         gbc.weightx = 0.0;
-        cadastroPanel.add(pesquisarButton, gbc);
+        cadastroInputPanel.add(pesquisarButton, gbc);
 
         // Terceira linha: Email, Celular e Telefone Fixo
         emailLabel = new JLabel("E-mail:");
@@ -201,32 +233,38 @@ public class ClientForm {
             celularTxt.setMinimumSize(new Dimension(180, celularTxt.getPreferredSize().height));
             celularTxt.setPreferredSize(new Dimension(250, celularTxt.getPreferredSize().height));
 
+            // Configurar o filtro de documento para permitir apenas dígitos
+            ((AbstractDocument) celularTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+
             telefoneFixoTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("(##) ####-####"));
             telefoneFixoTxt.setColumns(9);
             telefoneFixoTxt.setMinimumSize(new Dimension(180, telefoneFixoTxt.getPreferredSize().height));
             telefoneFixoTxt.setPreferredSize(new Dimension(250, telefoneFixoTxt.getPreferredSize().height));
+
+            // Configurar o filtro de documento para permitir apenas dígitos
+            ((AbstractDocument) telefoneFixoTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
         } catch (ParseException e) {
             e.printStackTrace();
         }
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        cadastroPanel.add(emailLabel, gbc);
+        cadastroInputPanel.add(emailLabel, gbc);
 
         gbc.gridx = 1;
-        cadastroPanel.add(emailTxt, gbc);
+        cadastroInputPanel.add(emailTxt, gbc);
 
         gbc.gridx = 2;
-        cadastroPanel.add(celularLabel, gbc);
+        cadastroInputPanel.add(celularLabel, gbc);
 
         gbc.gridx = 3;
-        cadastroPanel.add(celularTxt, gbc);
+        cadastroInputPanel.add(celularTxt, gbc);
 
         gbc.gridx = 4;
-        cadastroPanel.add(telefoneFixoLabel, gbc);
+        cadastroInputPanel.add(telefoneFixoLabel, gbc);
 
         gbc.gridx = 5;
-        cadastroPanel.add(telefoneFixoTxt, gbc);
+        cadastroInputPanel.add(telefoneFixoTxt, gbc);
 
         // Quarta linha: CEP, Endereço e Número
         cepLabel = new JLabel("CEP:");
@@ -235,6 +273,9 @@ public class ClientForm {
             cepTxt.setColumns(8);
             cepTxt.setMinimumSize(new Dimension(180, cepTxt.getPreferredSize().height));
             cepTxt.setPreferredSize(new Dimension(250, cepTxt.getPreferredSize().height));
+
+            // Configurar o filtro de documento para permitir apenas dígitos
+            ((AbstractDocument) cepTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -245,28 +286,31 @@ public class ClientForm {
         enderecoTxt.setPreferredSize(new Dimension(250, enderecoTxt.getPreferredSize().height));
 
         numLabel = new JLabel("Número:");
-        numTxt = new JTextField(5);
-        numTxt.setMinimumSize(new Dimension(50, numTxt.getPreferredSize().height));
-        numTxt.setPreferredSize(new Dimension(120, numTxt.getPreferredSize().height));
+        numTxt = new JTextField(7);
+        numTxt.setMinimumSize(new Dimension(80, numTxt.getPreferredSize().height));
+        numTxt.setPreferredSize(new Dimension(130, numTxt.getPreferredSize().height));
+
+        // Configurar o filtro de documento para permitir apenas dígitos
+        ((AbstractDocument) numTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        cadastroPanel.add(cepLabel, gbc);
+        cadastroInputPanel.add(cepLabel, gbc);
 
         gbc.gridx = 1;
-        cadastroPanel.add(cepTxt, gbc);
+        cadastroInputPanel.add(cepTxt, gbc);
 
         gbc.gridx = 2;
-        cadastroPanel.add(enderecoLabel, gbc);
+        cadastroInputPanel.add(enderecoLabel, gbc);
 
         gbc.gridx = 3;
-        cadastroPanel.add(enderecoTxt, gbc);
+        cadastroInputPanel.add(enderecoTxt, gbc);
 
         gbc.gridx = 4;
-        cadastroPanel.add(numLabel, gbc);
+        cadastroInputPanel.add(numLabel, gbc);
 
         gbc.gridx = 5;
-        cadastroPanel.add(numTxt, gbc);
+        cadastroInputPanel.add(numTxt, gbc);
 
         // Quinta linha: Bairro, Cidade, Complemento e UF
         bairroLabel = new JLabel("Bairro:");
@@ -289,28 +333,28 @@ public class ClientForm {
 
         gbc.gridx = 0;
         gbc.gridy = 4;
-        cadastroPanel.add(bairroLabel, gbc);
+        cadastroInputPanel.add(bairroLabel, gbc);
 
         gbc.gridx = 1;
-        cadastroPanel.add(bairroTxt, gbc);
+        cadastroInputPanel.add(bairroTxt, gbc);
 
         gbc.gridx = 2;
-        cadastroPanel.add(cidadeLabel, gbc);
+        cadastroInputPanel.add(cidadeLabel, gbc);
 
         gbc.gridx = 3;
-        cadastroPanel.add(cidadeTxt, gbc);
+        cadastroInputPanel.add(cidadeTxt, gbc);
 
         gbc.gridx = 4;
-        cadastroPanel.add(complementoLabel, gbc);
+        cadastroInputPanel.add(complementoLabel, gbc);
 
         gbc.gridx = 5;
-        cadastroPanel.add(complementoTxt, gbc);
+        cadastroInputPanel.add(complementoTxt, gbc);
 
         gbc.gridx = 6;
-        cadastroPanel.add(ufLabel, gbc);
+        cadastroInputPanel.add(ufLabel, gbc);
 
         gbc.gridx = 7;
-        cadastroPanel.add(ufComboBox, gbc);
+        cadastroInputPanel.add(ufComboBox, gbc);
 
         // Sexta linha: RG, CPF
         rgLabel = new JLabel("RG:");
@@ -318,41 +362,48 @@ public class ClientForm {
         rgTxt.setMinimumSize(new Dimension(180, rgTxt.getPreferredSize().height));
         rgTxt.setPreferredSize(new Dimension(250, rgTxt.getPreferredSize().height));
 
+        // Configurar o filtro de documento para permitir apenas dígitos
+        ((AbstractDocument) rgTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+
         cpfLabel = new JLabel("CPF:");
         try {
             cpfTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("###.###.###-##"));
             cpfTxt.setColumns(11);
             cpfTxt.setMinimumSize(new Dimension(180, cpfTxt.getPreferredSize().height));
             cpfTxt.setPreferredSize(new Dimension(250, cpfTxt.getPreferredSize().height));
+
+            // Configurar o filtro de documento para permitir apenas dígitos
+            ((AbstractDocument) cpfTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
         } catch (ParseException e) {
             e.printStackTrace();
         }
 
         gbc.gridx = 0;
         gbc.gridy = 5;
-        cadastroPanel.add(rgLabel, gbc);
+        cadastroInputPanel.add(rgLabel, gbc);
 
         gbc.gridx = 1;
-        cadastroPanel.add(rgTxt, gbc);
+        cadastroInputPanel.add(rgTxt, gbc);
 
         gbc.gridx = 2;
-        cadastroPanel.add(cpfLabel, gbc);
+        cadastroInputPanel.add(cpfLabel, gbc);
 
         gbc.gridx = 3;
-        cadastroPanel.add(cpfTxt, gbc);
+        cadastroInputPanel.add(cpfTxt, gbc);
 
-        // Sétima linha: Botão Salvar
+        cadastroPanel.add(cadastroInputPanel, BorderLayout.CENTER);
+
+        // Borda SUL: Botão Salvar
         saveButton = new JButton("Cadastrar");
         saveButton.setPreferredSize(new Dimension(150, saveButton.getPreferredSize().height));
+        saveButton.setMaximumSize(new Dimension(400, saveButton.getPreferredSize().height));
 
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-//        gbc.gridwidth = 5;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.fill = GridBagConstraints.NONE;
+        saveButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        saveButtonPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
 
-        cadastroPanel.add(saveButton, gbc);
+        saveButtonPanel.add(saveButton);
+
+        cadastroPanel.add(saveButtonPanel, BorderLayout.SOUTH);
 
         final Set<String> UF_SET = Set.of(
             "AC", // Acre
@@ -388,7 +439,7 @@ public class ClientForm {
         saveButton.addActionListener(new SaveButtonActionListener());
 
         // Adicionar aba de cadastro
-        tabbedPane1.addTab("Cadastro", cadastroPanel);
+        tabbedPane.addTab("Cadastro", cadastroPanel);
 
         // Consulta Panel
         JPanel consultaPanel = new JPanel(new BorderLayout(10, 10));
@@ -410,19 +461,30 @@ public class ClientForm {
         consultaPanel.add(consultaTopPanel, BorderLayout.NORTH);
         consultaPanel.add(scrollPane, BorderLayout.CENTER);
 
-        tabbedPane1.addTab("Consulta", consultaPanel);
+        tabbedPane.addTab("Consulta", consultaPanel);
 
-        main.add(tabbedPane1, BorderLayout.CENTER);
+        main.add(tabbedPane, BorderLayout.CENTER);
+
+        main.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                final int windowHeight = main.getHeight();
+                final float saveButtonMarginCoeficient = windowHeight > 800 ? .1F : .05F;
+                final int saveButtonBottomMargin = (int) (windowHeight*saveButtonMarginCoeficient);
+
+                saveButtonPanel.setBorder(new EmptyBorder(0, 0, saveButtonBottomMargin, 0));
+
+                main.revalidate();
+            }
+        });
     }
 
     /**
-     * Creates and shows a new visible ModernForm JFrame.
-     * @return The created ModernForm object
+     * Creates and shows a new visible JFrame with this component as content.
      */
     public void createFrameAndShowClientForm(String frameTitle) {
         this.frame = new JFrame(frameTitle);
 
-//        ModernForm form = new ModernForm();
         this.frame.setContentPane(this.main);
         this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.frame.pack();
