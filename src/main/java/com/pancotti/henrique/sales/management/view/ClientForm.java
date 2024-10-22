@@ -2,18 +2,22 @@ package com.pancotti.henrique.sales.management.view;
 
 import com.pancotti.henrique.sales.management.dao.ClientDAO;
 import com.pancotti.henrique.sales.management.model.ClientModel;
-import mdlaf.MaterialLookAndFeel;
-import mdlaf.themes.JMarsDarkTheme;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
-public class ClientForm extends JFrame {
+public class ClientForm {
+    private static final int V_GAP_MAX_HEIGHT = 25;
+
+    private JFrame frame;
     private JPanel main;
     private JLabel headerStringLabel;
     private JTabbedPane tabbedPane1;
@@ -47,6 +51,10 @@ public class ClientForm extends JFrame {
     private JFormattedTextField cpfTxt;
     private JLabel cpfLabel;
     private JButton saveButton;
+
+    private JTextField consultaNomeTxt;
+    private JButton consultaPesquisarButton;
+    private JTable consultaTable;
 
     private class SaveButtonActionListener implements ActionListener {
         @Override
@@ -107,16 +115,244 @@ public class ClientForm extends JFrame {
         return errorTxtArea;
     }
 
+    public void setMainFrameMinimumSize(Dimension dimension) {
+        if (dimension.width < 1200) dimension.width = 1200;
+
+        this.frame.setMinimumSize(dimension);
+    }
+
+    public void setMainPanelMaximumSize(Dimension dimension) {
+        this.main.setMaximumSize(dimension);
+    }
+
+    private static void setFontForContainerChildren(Container container, Font font) {
+        Arrays.stream(container.getComponents()).forEach(component -> {
+            component.setFont(font);
+
+            if (component instanceof Container) {
+                setFontForContainerChildren((Container) component, font);
+            }
+        });
+    }
+
+    public void setFormFont(Font font) {
+        setFontForContainerChildren(main, font);
+    }
+
     public ClientForm() {
-        super("Sales Management");
+        // Inicializar componentes
+        main = new JPanel(new BorderLayout());
+        tabbedPane1 = new JTabbedPane();
+        JPanel cadastroPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
+
+        gbc.insets = new Insets(15, 10, 15, 10); // Margens entre componentes
+
+        // Primeira linha: Código
+        codigoLabel = new JLabel("Código:");
+
+        codigoTxt = new JTextField(20);
+        codigoTxt.setMinimumSize(new Dimension(180, codigoTxt.getPreferredSize().height));
+        codigoTxt.setPreferredSize(new Dimension(250, codigoTxt.getPreferredSize().height));
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        cadastroPanel.add(codigoLabel, gbc);
+        gbc.anchor = GridBagConstraints.LINE_START;
+        gbc.gridx = 1;
+        cadastroPanel.add(codigoTxt, gbc);
+
+        // Segunda linha: Nome e Pesquisar
+        nomeLabel = new JLabel("Nome:");
+        nomeTxt = new JTextField(20);
+        nomeTxt.setMinimumSize(new Dimension(180, nomeTxt.getPreferredSize().height));
+        nomeTxt.setPreferredSize(new Dimension(250, nomeTxt.getPreferredSize().height));
+
+        pesquisarButton = new JButton("Pesquisar");
+
+        gbc.gridy = 1;
+        gbc.gridx = 0;
+        cadastroPanel.add(nomeLabel, gbc);
+
+        gbc.gridx = 1;
+//        gbc.weightx = 1.0;
+        cadastroPanel.add(nomeTxt, gbc);
+
+        gbc.gridx = 2;
+        gbc.weightx = 0.0;
+        cadastroPanel.add(pesquisarButton, gbc);
+
+        // Terceira linha: Email, Celular e Telefone Fixo
+        emailLabel = new JLabel("E-mail:");
+        emailTxt = new JTextField(20);
+
+        emailTxt.setMinimumSize(new Dimension(180, emailTxt.getPreferredSize().height));
+        emailTxt.setPreferredSize(new Dimension(250, emailTxt.getPreferredSize().height));
+
+        celularLabel = new JLabel("Celular:");
+        telefoneFixoLabel = new JLabel("Telefone Fixo:");
+
         try {
-            UIManager.setLookAndFeel(new MaterialLookAndFeel(new JMarsDarkTheme())); // Exemplo de tema escuro
-        } catch (UnsupportedLookAndFeelException e) {
+            celularTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("(##) #####-####"));
+            celularTxt.setColumns(10);
+            celularTxt.setMinimumSize(new Dimension(180, celularTxt.getPreferredSize().height));
+            celularTxt.setPreferredSize(new Dimension(250, celularTxt.getPreferredSize().height));
+
+            telefoneFixoTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("(##) ####-####"));
+            telefoneFixoTxt.setColumns(9);
+            telefoneFixoTxt.setMinimumSize(new Dimension(180, telefoneFixoTxt.getPreferredSize().height));
+            telefoneFixoTxt.setPreferredSize(new Dimension(250, telefoneFixoTxt.getPreferredSize().height));
+        } catch (ParseException e) {
             e.printStackTrace();
         }
 
-        this.setContentPane(main);
-        this.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        cadastroPanel.add(emailLabel, gbc);
+
+        gbc.gridx = 1;
+        cadastroPanel.add(emailTxt, gbc);
+
+        gbc.gridx = 2;
+        cadastroPanel.add(celularLabel, gbc);
+
+        gbc.gridx = 3;
+        cadastroPanel.add(celularTxt, gbc);
+
+        gbc.gridx = 4;
+        cadastroPanel.add(telefoneFixoLabel, gbc);
+
+        gbc.gridx = 5;
+        cadastroPanel.add(telefoneFixoTxt, gbc);
+
+        // Quarta linha: CEP, Endereço e Número
+        cepLabel = new JLabel("CEP:");
+        try {
+            cepTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("#####-###"));
+            cepTxt.setColumns(8);
+            cepTxt.setMinimumSize(new Dimension(180, cepTxt.getPreferredSize().height));
+            cepTxt.setPreferredSize(new Dimension(250, cepTxt.getPreferredSize().height));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        enderecoLabel = new JLabel("Endereço:");
+        enderecoTxt = new JTextField(20);
+        enderecoTxt.setMinimumSize(new Dimension(180, enderecoTxt.getPreferredSize().height));
+        enderecoTxt.setPreferredSize(new Dimension(250, enderecoTxt.getPreferredSize().height));
+
+        numLabel = new JLabel("Número:");
+        numTxt = new JTextField(5);
+        numTxt.setMinimumSize(new Dimension(50, numTxt.getPreferredSize().height));
+        numTxt.setPreferredSize(new Dimension(120, numTxt.getPreferredSize().height));
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        cadastroPanel.add(cepLabel, gbc);
+
+        gbc.gridx = 1;
+        cadastroPanel.add(cepTxt, gbc);
+
+        gbc.gridx = 2;
+        cadastroPanel.add(enderecoLabel, gbc);
+
+        gbc.gridx = 3;
+        cadastroPanel.add(enderecoTxt, gbc);
+
+        gbc.gridx = 4;
+        cadastroPanel.add(numLabel, gbc);
+
+        gbc.gridx = 5;
+        cadastroPanel.add(numTxt, gbc);
+
+        // Quinta linha: Bairro, Cidade, Complemento e UF
+        bairroLabel = new JLabel("Bairro:");
+        bairroTxt = new JTextField(15);
+        bairroTxt.setMinimumSize(new Dimension(180, bairroTxt.getPreferredSize().height));
+        bairroTxt.setPreferredSize(new Dimension(250, bairroTxt.getPreferredSize().height));
+
+        cidadeLabel = new JLabel("Cidade:");
+        cidadeTxt = new JTextField(15);
+        cidadeTxt.setMinimumSize(new Dimension(180, cidadeTxt.getPreferredSize().height));
+        cidadeTxt.setPreferredSize(new Dimension(250, cidadeTxt.getPreferredSize().height));
+
+        complementoLabel = new JLabel("Complemento:");
+        complementoTxt = new JTextField(15);
+        complementoTxt.setMinimumSize(new Dimension(180, complementoTxt.getPreferredSize().height));
+        complementoTxt.setPreferredSize(new Dimension(250, complementoTxt.getPreferredSize().height));
+
+        ufLabel = new JLabel("UF:");
+        ufComboBox = new JComboBox<>();
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        cadastroPanel.add(bairroLabel, gbc);
+
+        gbc.gridx = 1;
+        cadastroPanel.add(bairroTxt, gbc);
+
+        gbc.gridx = 2;
+        cadastroPanel.add(cidadeLabel, gbc);
+
+        gbc.gridx = 3;
+        cadastroPanel.add(cidadeTxt, gbc);
+
+        gbc.gridx = 4;
+        cadastroPanel.add(complementoLabel, gbc);
+
+        gbc.gridx = 5;
+        cadastroPanel.add(complementoTxt, gbc);
+
+        gbc.gridx = 6;
+        cadastroPanel.add(ufLabel, gbc);
+
+        gbc.gridx = 7;
+        cadastroPanel.add(ufComboBox, gbc);
+
+        // Sexta linha: RG, CPF
+        rgLabel = new JLabel("RG:");
+        rgTxt = new JTextField(10);
+        rgTxt.setMinimumSize(new Dimension(180, rgTxt.getPreferredSize().height));
+        rgTxt.setPreferredSize(new Dimension(250, rgTxt.getPreferredSize().height));
+
+        cpfLabel = new JLabel("CPF:");
+        try {
+            cpfTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("###.###.###-##"));
+            cpfTxt.setColumns(11);
+            cpfTxt.setMinimumSize(new Dimension(180, cpfTxt.getPreferredSize().height));
+            cpfTxt.setPreferredSize(new Dimension(250, cpfTxt.getPreferredSize().height));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        cadastroPanel.add(rgLabel, gbc);
+
+        gbc.gridx = 1;
+        cadastroPanel.add(rgTxt, gbc);
+
+        gbc.gridx = 2;
+        cadastroPanel.add(cpfLabel, gbc);
+
+        gbc.gridx = 3;
+        cadastroPanel.add(cpfTxt, gbc);
+
+        // Sétima linha: Botão Salvar
+        saveButton = new JButton("Cadastrar");
+        saveButton.setPreferredSize(new Dimension(150, saveButton.getPreferredSize().height));
+
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+//        gbc.gridwidth = 5;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.NONE;
+
+        cadastroPanel.add(saveButton, gbc);
 
         final Set<String> UF_SET = Set.of(
             "AC", // Acre
@@ -150,5 +386,47 @@ public class ClientForm extends JFrame {
         UF_SET.stream().sorted().forEach(uf -> this.ufComboBox.addItem(uf));
 
         saveButton.addActionListener(new SaveButtonActionListener());
+
+        // Adicionar aba de cadastro
+        tabbedPane1.addTab("Cadastro", cadastroPanel);
+
+        // Consulta Panel
+        JPanel consultaPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel consultaTopPanel = new JPanel(new FlowLayout());
+
+        consultaNomeTxt = new JTextField(15);
+        consultaPesquisarButton = new JButton("Pesquisar");
+
+        consultaTopPanel.add(new JLabel("Nome:"));
+        consultaTopPanel.add(consultaNomeTxt);
+        consultaTopPanel.add(consultaPesquisarButton);
+
+        // Tabela de consulta
+        String[] colunas = {"Código", "Nome", "Celular", "E-mail"};
+        DefaultTableModel model = new DefaultTableModel(null, colunas);
+        consultaTable = new JTable(model);
+
+        JScrollPane scrollPane = new JScrollPane(consultaTable);
+        consultaPanel.add(consultaTopPanel, BorderLayout.NORTH);
+        consultaPanel.add(scrollPane, BorderLayout.CENTER);
+
+        tabbedPane1.addTab("Consulta", consultaPanel);
+
+        main.add(tabbedPane1, BorderLayout.CENTER);
+    }
+
+    /**
+     * Creates and shows a new visible ModernForm JFrame.
+     * @return The created ModernForm object
+     */
+    public void createFrameAndShowClientForm(String frameTitle) {
+        this.frame = new JFrame(frameTitle);
+
+//        ModernForm form = new ModernForm();
+        this.frame.setContentPane(this.main);
+        this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.frame.pack();
+        this.frame.setLocationRelativeTo(null);
+        this.frame.setVisible(true);
     }
 }

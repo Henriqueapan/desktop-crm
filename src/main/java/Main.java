@@ -1,7 +1,6 @@
 import javax.swing.*;
 
 import com.pancotti.henrique.sales.management.view.ClientForm;
-import com.pancotti.henrique.sales.management.view.ModernForm;
 import mdlaf.MaterialLookAndFeel;
 import mdlaf.themes.JMarsDarkTheme;
 
@@ -11,8 +10,8 @@ public class Main {
     public static void main(String[] args) throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         UIManager.setLookAndFeel(new MaterialLookAndFeel(new JMarsDarkTheme()));
 
-        ModernForm modernForm = new ModernForm();
-        modernForm.createFrameAndShowModernForm();
+        ClientForm modernForm = new ClientForm();
+        modernForm.createFrameAndShowClientForm("Cadastro de Clientes");
 
         modernForm.setMainFrameMinimumSize(new Dimension(1200, 500));
         modernForm.setMainPanelMaximumSize(new Dimension(10, 10));
