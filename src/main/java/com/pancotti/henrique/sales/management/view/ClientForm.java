@@ -24,7 +24,7 @@ public class ClientForm {
     private static final ClientDAO clientDao = new ClientDAO();
 
     private JFrame frame;
-    private JPanel main;
+    private final JPanel main;
     private JLabel headerStringLabel;
     private JTabbedPane tabbedPane;
     private JPanel cadastroPanel;
@@ -64,6 +64,28 @@ public class ClientForm {
     private JTextField consultaNomeTxt;
     private JButton consultaPesquisarButton;
     private JTable consultaTable;
+
+    private static final class LimitedLengthDocumentFilter extends DocumentFilter {
+        private final int maxLength;
+
+        public LimitedLengthDocumentFilter(int maxLength) {
+            this.maxLength = maxLength;
+        }
+
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+            if (fb.getDocument().getLength() + string.length() <= maxLength) {
+                super.insertString(fb, offset, string, attr);
+            }
+        }
+
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+            if (fb.getDocument().getLength() + text.length() - length <= maxLength) {
+                super.replace(fb, offset, length, text, attrs);
+            }
+        }
+    }
 
     private static final DocumentFilter digitsOnlyDocumentFilter = new DocumentFilter() {
         @Override
@@ -284,6 +306,9 @@ public class ClientForm {
         nomeTxt.setPreferredSize(new Dimension(250, nomeTxt.getPreferredSize().height));
         nomeTxt.setName("Nome");
 
+        // Configurar o filtro de documento para limitar comprimento do texto
+        ((AbstractDocument) nomeTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(150));
+
         pesquisarButton = new JButton("Pesquisar");
 
         gbc.gridy = 1;
@@ -305,6 +330,9 @@ public class ClientForm {
         emailTxt.setPreferredSize(new Dimension(250, emailTxt.getPreferredSize().height));
         emailTxt.setName("E-mail");
 
+        // Configurar o filtro de documento para limitar comprimento do texto
+        ((AbstractDocument) emailTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(150));
+
         celularLabel = new JLabel("Celular:");
         telefoneFixoLabel = new JLabel("Telefone Fixo:");
 
@@ -318,6 +346,8 @@ public class ClientForm {
 
             // Configurar o filtro de documento para permitir apenas dígitos
             ((AbstractDocument) celularTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+            // Configurar o filtro de documento para limitar comprimento do texto
+            ((AbstractDocument) celularTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(12));
 
             telefoneFixoTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("(##) ####-####"));
             telefoneFixoTxt.setColumns(9);
@@ -328,6 +358,8 @@ public class ClientForm {
 
             // Configurar o filtro de documento para permitir apenas dígitos
             ((AbstractDocument) telefoneFixoTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+            // Configurar o filtro de documento para limitar comprimento do texto
+            ((AbstractDocument) telefoneFixoTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(11));
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -373,6 +405,10 @@ public class ClientForm {
         enderecoTxt.setPreferredSize(new Dimension(250, enderecoTxt.getPreferredSize().height));
         enderecoTxt.setName("Endereço");
 
+
+        // Configurar o filtro de documento para limitar comprimento do texto
+        ((AbstractDocument) enderecoTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(255));
+
         numLabel = new JLabel("Número:");
         numTxt = new JTextField(7);
         numTxt.setMinimumSize(new Dimension(80, numTxt.getPreferredSize().height));
@@ -381,6 +417,8 @@ public class ClientForm {
 
         // Configurar o filtro de documento para permitir apenas dígitos
         ((AbstractDocument) numTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+        // Configurar o filtro de documento para limitar comprimento do texto
+        ((AbstractDocument) numTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(10));
 
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -408,17 +446,26 @@ public class ClientForm {
         bairroTxt.setPreferredSize(new Dimension(250, bairroTxt.getPreferredSize().height));
         bairroTxt.setName("Bairro");
 
+        // Configurar o filtro de documento para limitar comprimento do texto
+        ((AbstractDocument) bairroTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(100));
+
         cidadeLabel = new JLabel("Cidade:");
         cidadeTxt = new JTextField(15);
         cidadeTxt.setMinimumSize(new Dimension(180, cidadeTxt.getPreferredSize().height));
         cidadeTxt.setPreferredSize(new Dimension(250, cidadeTxt.getPreferredSize().height));
         cidadeTxt.setName("Cidade");
 
+        // Configurar o filtro de documento para limitar comprimento do texto
+        ((AbstractDocument) cidadeTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(100));
+
         complementoLabel = new JLabel("Complemento:");
         complementoTxt = new JTextField(15);
         complementoTxt.setMinimumSize(new Dimension(180, complementoTxt.getPreferredSize().height));
         complementoTxt.setPreferredSize(new Dimension(250, complementoTxt.getPreferredSize().height));
         complementoTxt.setName("Complemento");
+
+        // Configurar o filtro de documento para limitar comprimento do texto
+        ((AbstractDocument) complementoTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(200));
 
         ufLabel = new JLabel("UF:");
         ufComboBox = new JComboBox<>();
@@ -461,6 +508,9 @@ public class ClientForm {
 
             // Configurar o filtro de documento para permitir apenas dígitos
             ((AbstractDocument) rgTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+
+            // Configurar o filtro de documento para limitar comprimento do texto
+            ((AbstractDocument) rgTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(30));
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
@@ -476,6 +526,9 @@ public class ClientForm {
 
             // Configurar o filtro de documento para permitir apenas dígitos
             ((AbstractDocument) cpfTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+
+            // Configurar o filtro de documento para limitar comprimento do texto
+            ((AbstractDocument) cpfTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(11));
         } catch (ParseException e) {
             e.printStackTrace();
         }
