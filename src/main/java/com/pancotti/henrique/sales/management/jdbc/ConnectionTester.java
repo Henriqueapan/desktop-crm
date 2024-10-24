@@ -29,7 +29,7 @@ public class ConnectionTester {
 
             ClientDAO clientDAO = new ClientDAO();
 
-            clientDAO.createClient(testClienteModel);
+            clientDAO.create(testClienteModel);
 //            JOptionPane.showMessageDialog(null, "Conectado");
         } catch (RuntimeException runtimeException) {
             JOptionPane.showMessageDialog(null, runtimeException.getCause().getMessage());

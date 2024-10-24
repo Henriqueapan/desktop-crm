@@ -13,10 +13,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
+
+import static com.pancotti.henrique.sales.management.util.UIUtil.getErrorDialogJTextAreaContent;
 
 public class ClientForm {
     private static final int V_GAP_MAX_HEIGHT = 25;
@@ -64,6 +64,7 @@ public class ClientForm {
     private JTextField consultaNomeTxt;
     private JButton consultaPesquisarButton;
     private JTable consultaTable;
+    private DefaultTableModel consultaTableModel;
 
     private static final class LimitedLengthDocumentFilter extends DocumentFilter {
         private final int maxLength;
@@ -172,7 +173,7 @@ public class ClientForm {
                     Objects.requireNonNull(ufComboBox.getSelectedItem()).toString()
                 );
 
-                clientDao.createClient(client);
+                clientDao.create(client);
 
                 JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso.");
             } catch (Exception exc) {
@@ -188,6 +189,23 @@ public class ClientForm {
                     JOptionPane.ERROR_MESSAGE
                 );
             }
+        }
+    }
+
+    private class TableSearchButtonActionListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            consultaTableModel.setRowCount(0);
+
+            String consultaNomeTextValue = consultaNomeTxt.getText();
+
+            List<ClientModel> clients = (consultaNomeTextValue == null || consultaNomeTextValue.isBlank())
+                ? clientDao.findAll()
+                : clientDao.findByNome(consultaNomeTextValue);
+
+            if(clients.isEmpty())
+                return;
+
+            clients.forEach(client -> consultaTableModel.addRow(client.toVector()));
         }
     }
 
@@ -208,43 +226,6 @@ public class ClientForm {
         return (acceptEmpty || !textContent.trim().isEmpty()) ? textContent : null;
     }
 
-    private static JTextArea getErrorDialogJTextAreaContent(Exception exc, String contextMessage) {
-        final String errorMessage =
-            contextMessage + "\n\n" + exc.getClass().getSimpleName() + "\n\n" + exc.getLocalizedMessage();
-        final int COLUMN_WIDTH = 25;
-
-        JTextArea errorTxtArea = new JTextArea(errorMessage);
-        errorTxtArea.setColumns(COLUMN_WIDTH);
-        errorTxtArea.setRows(errorMessage.length() / COLUMN_WIDTH);
-        errorTxtArea.setEditable(false);
-        errorTxtArea.setLineWrap(true);
-        errorTxtArea.setWrapStyleWord(true);
-        errorTxtArea.setAlignmentX(Component.CENTER_ALIGNMENT);
-        errorTxtArea.setAlignmentY(Component.CENTER_ALIGNMENT);
-        errorTxtArea.setOpaque(false);
-        errorTxtArea.setSize(errorTxtArea.getPreferredSize().width, 1);
-        errorTxtArea.setBorder(new EmptyBorder(2, 2, 2, 2));
-
-        return errorTxtArea;
-    }
-
-    private static JTextArea getErrorDialogJTextAreaContent(String errorMessage) {
-        final int COLUMN_WIDTH = 25;
-
-        JTextArea errorTxtArea = new JTextArea(errorMessage);
-        errorTxtArea.setColumns(COLUMN_WIDTH);
-        errorTxtArea.setRows(errorMessage.length() / COLUMN_WIDTH);
-        errorTxtArea.setEditable(false);
-        errorTxtArea.setLineWrap(true);
-        errorTxtArea.setWrapStyleWord(true);
-        errorTxtArea.setAlignmentX(Component.CENTER_ALIGNMENT);
-        errorTxtArea.setAlignmentY(Component.CENTER_ALIGNMENT);
-        errorTxtArea.setOpaque(false);
-        errorTxtArea.setSize(errorTxtArea.getPreferredSize().width, 1);
-        errorTxtArea.setBorder(new EmptyBorder(2, 2, 2, 2));
-
-        return errorTxtArea;
-    }
 
     public void setMainFrameMinimumSize(Dimension dimension) {
         if (dimension.width < 1200) dimension.width = 1200;
@@ -257,6 +238,8 @@ public class ClientForm {
     }
 
     private static void setFontForChildComponents(Container parentContainer, Font font) {
+        parentContainer.setFont(font);
+
         Arrays.stream(parentContainer.getComponents()).forEach(component -> {
             component.setFont(font);
 
@@ -268,6 +251,10 @@ public class ClientForm {
 
     public void setFormFont(Font font) {
         setFontForChildComponents(main, font);
+    }
+
+    public void setTableFont(Font font) {
+        setFontForChildComponents(consultaTable, font);
     }
 
     public ClientForm() {
@@ -598,20 +585,42 @@ public class ClientForm {
 
         // Consulta Panel
         JPanel consultaPanel = new JPanel(new BorderLayout(10, 10));
-        JPanel consultaTopPanel = new JPanel(new FlowLayout());
 
-        consultaNomeTxt = new JTextField(15);
+        FlowLayout consultaTopPanelFlowLayout = new FlowLayout();
+        consultaTopPanelFlowLayout.setHgap(20);
+        consultaTopPanelFlowLayout.setAlignment(FlowLayout.LEADING);
+
+        JPanel consultaTopPanel = new JPanel(consultaTopPanelFlowLayout);
+        consultaTopPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        JLabel consultaNomeLabel = new JLabel("Nome:");
+        consultaNomeLabel.setLabelFor(consultaNomeTxt);
+
+        consultaNomeTxt = new JTextField(20);
+
+        // Configurar o filtro de documento para limitar comprimento do texto
+        ((AbstractDocument) consultaNomeTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(150));
 
         consultaPesquisarButton = new JButton("Pesquisar");
+        consultaPesquisarButton.setPreferredSize(new Dimension(
+                150, consultaNomeTxt.getPreferredSize().height + 5
+            )
+        );
 
-        consultaTopPanel.add(new JLabel("Nome:"));
+        consultaPesquisarButton.addActionListener(new TableSearchButtonActionListener());
+
+        consultaTopPanel.add(consultaNomeLabel);
         consultaTopPanel.add(consultaNomeTxt);
         consultaTopPanel.add(consultaPesquisarButton);
 
         // Tabela de consulta
-        String[] colunas = {"Código", "Nome", "Celular", "E-mail"};
-        DefaultTableModel model = new DefaultTableModel(null, colunas);
-        consultaTable = new JTable(model);
+        String[] colunas =
+            {"Código", "Nome", "RG", "E-mail", "Tel.", "Cel.", "CEP", "Endereço", "N°", "Compl.", "Bairro", "Cidade", "UF"};
+
+        consultaTableModel = new DefaultTableModel(null, colunas);
+
+        consultaTable = new JTable(consultaTableModel);
+        consultaTable.setShowHorizontalLines(true);
 
         JScrollPane scrollPane = new JScrollPane(consultaTable);
         consultaPanel.add(consultaTopPanel, BorderLayout.NORTH);

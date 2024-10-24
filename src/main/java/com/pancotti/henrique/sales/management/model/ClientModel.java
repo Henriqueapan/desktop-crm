@@ -4,10 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Vector;
+
 @Getter
 @Setter
 @AllArgsConstructor
 public class ClientModel {
+    private int id;
+
     private String nome;
 
     private String rg;
@@ -33,19 +37,54 @@ public class ClientModel {
     private String cidade;
 
     private String estado;
-}
 
-//id int auto_increment primary key,
-//nome varchar(100),
-//rg varchar (30),
-//cpf varchar (20),
-//email varchar(200),
-//telefone varchar(30),
-//celular varchar(30),
-//cep varchar(100),
-//endereco varchar (255),
-//numero int,
-//complemento varchar (200),
-//bairro varchar (100),
-//cidade varchar (100),
-//estado varchar (2)
+    public ClientModel(
+        String nome,
+        String rg,
+        String cpf,
+        String email,
+        String telefone,
+        String celular,
+        String cep,
+        String endereco,
+        int numero,
+        String complemento,
+        String bairro,
+        String cidade,
+        String estado
+    ) {
+        this.nome = nome;
+        this.rg = rg;
+        this.cpf = cpf;
+        this.email = email;
+        this.telefone = telefone;
+        this.celular = celular;
+        this.cep = cep;
+        this.endereco = endereco;
+        this.numero = numero;
+        this.complemento = complemento;
+        this.bairro = bairro;
+        this.cidade = cidade;
+        this.estado = estado;
+    }
+
+    public Vector<Object> toVector() {
+        Vector<Object> v = new Vector<>();
+        v.add(id);
+        v.add(nome);
+        v.add(rg);
+        v.add(email);
+        v.add(cpf);
+        v.add(telefone);
+        v.add(celular);
+        v.add(cep);
+        v.add(endereco);
+        v.add(numero);
+        v.add(complemento);
+        v.add(bairro);
+        v.add(cidade);
+        v.add(estado);
+
+        return v;
+    }
+}

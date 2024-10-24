@@ -17,6 +17,7 @@ public class Main {
         modernForm.setMainPanelMaximumSize(new Dimension(10, 10));
 
         modernForm.setFormFont(new Font("Arial", Font.PLAIN, 20));
+        modernForm.setTableFont(new Font("Arial", Font.PLAIN, 12));
 
 //        UIManager.setLookAndFeel(new MaterialLookAndFeel(new JMarsDarkTheme()));
 //        ClientForm cf = new ClientForm();
