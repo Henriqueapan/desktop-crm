@@ -175,7 +175,7 @@ public class ClientForm {
 
                 clientDao.create(client);
 
-                JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso.");
+//                JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso.");
             } catch (Exception exc) {
                 JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
                     exc,
@@ -189,6 +189,33 @@ public class ClientForm {
                     JOptionPane.ERROR_MESSAGE
                 );
             }
+        }
+    }
+
+    private class FormSearchButtonActionListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            String cpfTextValue = getTextIfValid(cpfTxt, false);
+
+            if (cpfTextValue == null || cpfTextValue.isBlank()) return;
+
+            ClientModel client = clientDao.findByCpf(cpfTextValue);
+
+            if(client == null)
+                return;
+
+            codigoTxt.setText(String.valueOf(client.getId()));
+            nomeTxt.setText(client.getNome());
+            emailTxt.setText(client.getEmail());
+            celularTxt.setValue(client.getCelular());
+            telefoneFixoTxt.setValue(client.getTelefone());
+            cepTxt.setValue(client.getCep());
+            enderecoTxt.setText(client.getEndereco());
+            numTxt.setText(String.valueOf(client.getNumero()));
+            bairroTxt.setText(client.getBairro());
+            cidadeTxt.setText(client.getCidade());
+            complementoTxt.setText(client.getComplemento());
+            ufComboBox.setSelectedItem(client.getEstado());
+            rgTxt.setValue(client.getRg());
         }
     }
 
@@ -210,19 +237,18 @@ public class ClientForm {
     }
 
     private static String getTextIfValid(JTextComponent textComponent, boolean acceptEmpty) {
-        final String textContent = textComponent.getText();
-
         if (textComponent instanceof JFormattedTextField) {
             try {
                 // Tenta obter o valor formatado, lançará ParseException se estiver incompleto
                 ((JFormattedTextField)textComponent).commitEdit();
-                return textContent;
+                return ((JFormattedTextField)textComponent).getValue().toString();
             } catch (ParseException e) {
                 return null;
             }
         }
 
         // JTextField
+        String textContent = textComponent.getText();
         return (acceptEmpty || !textContent.trim().isEmpty()) ? textContent : null;
     }
 
@@ -286,7 +312,42 @@ public class ClientForm {
         gbc.gridx = 1;
         cadastroInputPanel.add(codigoTxt, gbc);
 
-        // Segunda linha: Nome e Pesquisar
+        // Segunda linha: CPF e Pesquisar
+        cpfLabel = new JLabel("CPF:");
+        try {
+            MaskFormatter cpfTxtMaskFormatter = new MaskFormatter("###.###.###-##");
+            cpfTxtMaskFormatter.setValueContainsLiteralCharacters(false);
+            cpfTxt = new JFormattedTextField(cpfTxtMaskFormatter);
+            cpfTxt.setColumns(11);
+            cpfTxt.setMinimumSize(new Dimension(180, cpfTxt.getPreferredSize().height));
+            cpfTxt.setPreferredSize(new Dimension(250, cpfTxt.getPreferredSize().height));
+            cpfTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            cpfTxt.setName("CPF");
+
+            // Configurar o filtro de documento para permitir apenas dígitos
+            ((AbstractDocument) cpfTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+
+            // Configurar o filtro de documento para limitar comprimento do texto
+            ((AbstractDocument) cpfTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(11));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        pesquisarButton = new JButton("Pesquisar");
+        pesquisarButton.addActionListener(new FormSearchButtonActionListener());
+
+        gbc.gridy = 1;
+        gbc.gridx = 0;
+        cadastroInputPanel.add(cpfLabel, gbc);
+
+        gbc.gridx = 1;
+        cadastroInputPanel.add(cpfTxt, gbc);
+
+        gbc.gridx = 2;
+        gbc.weightx = 0.0;
+        cadastroInputPanel.add(pesquisarButton, gbc);
+
+        // Terceira linha: Nome
         nomeLabel = new JLabel("Nome:");
         nomeTxt = new JTextField(20);
         nomeTxt.setMinimumSize(new Dimension(180, nomeTxt.getPreferredSize().height));
@@ -296,9 +357,8 @@ public class ClientForm {
         // Configurar o filtro de documento para limitar comprimento do texto
         ((AbstractDocument) nomeTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(150));
 
-        pesquisarButton = new JButton("Pesquisar");
 
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.gridx = 0;
         cadastroInputPanel.add(nomeLabel, gbc);
 
@@ -306,11 +366,7 @@ public class ClientForm {
 //        gbc.weightx = 1.0;
         cadastroInputPanel.add(nomeTxt, gbc);
 
-        gbc.gridx = 2;
-        gbc.weightx = 0.0;
-        cadastroInputPanel.add(pesquisarButton, gbc);
-
-        // Terceira linha: Email, Celular e Telefone Fixo
+        // Quarta linha: Email, Celular e Telefone Fixo
         emailLabel = new JLabel("E-mail:");
         emailTxt = new JTextField(20);
         emailTxt.setMinimumSize(new Dimension(180, emailTxt.getPreferredSize().height));
@@ -324,7 +380,9 @@ public class ClientForm {
         telefoneFixoLabel = new JLabel("Telefone Fixo:");
 
         try {
-            celularTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("(##) #####-####"));
+            MaskFormatter celularTxtMaskFormatter = new MaskFormatter("(##) #####-####");
+            celularTxtMaskFormatter.setValueContainsLiteralCharacters(false);
+            celularTxt = new JFormattedTextField(celularTxtMaskFormatter);
             celularTxt.setColumns(10);
             celularTxt.setMinimumSize(new Dimension(180, celularTxt.getPreferredSize().height));
             celularTxt.setPreferredSize(new Dimension(250, celularTxt.getPreferredSize().height));
@@ -336,7 +394,9 @@ public class ClientForm {
             // Configurar o filtro de documento para limitar comprimento do texto
             ((AbstractDocument) celularTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(12));
 
-            telefoneFixoTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("(##) ####-####"));
+            MaskFormatter telefoneFixoTxtMaskFormatter = new MaskFormatter("(##) ####-####");
+            telefoneFixoTxtMaskFormatter.setValueContainsLiteralCharacters(false);
+            telefoneFixoTxt = new JFormattedTextField(telefoneFixoTxtMaskFormatter);
             telefoneFixoTxt.setColumns(9);
             telefoneFixoTxt.setMinimumSize(new Dimension(180, telefoneFixoTxt.getPreferredSize().height));
             telefoneFixoTxt.setPreferredSize(new Dimension(250, telefoneFixoTxt.getPreferredSize().height));
@@ -352,7 +412,7 @@ public class ClientForm {
         }
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         cadastroInputPanel.add(emailLabel, gbc);
 
         gbc.gridx = 1;
@@ -370,10 +430,12 @@ public class ClientForm {
         gbc.gridx = 5;
         cadastroInputPanel.add(telefoneFixoTxt, gbc);
 
-        // Quarta linha: CEP, Endereço e Número
+        // Quinta linha: CEP, Endereço e Número
         cepLabel = new JLabel("CEP:");
         try {
-            cepTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("#####-###"));
+            MaskFormatter cepTxtMaskFormatter = new MaskFormatter("#####-###");
+            cepTxtMaskFormatter.setValueContainsLiteralCharacters(false);
+            cepTxt = new JFormattedTextField(cepTxtMaskFormatter);
             cepTxt.setColumns(8);
             cepTxt.setMinimumSize(new Dimension(180, cepTxt.getPreferredSize().height));
             cepTxt.setPreferredSize(new Dimension(250, cepTxt.getPreferredSize().height));
@@ -408,7 +470,7 @@ public class ClientForm {
         ((AbstractDocument) numTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(10));
 
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         cadastroInputPanel.add(cepLabel, gbc);
 
         gbc.gridx = 1;
@@ -426,7 +488,7 @@ public class ClientForm {
         gbc.gridx = 5;
         cadastroInputPanel.add(numTxt, gbc);
 
-        // Quinta linha: Bairro, Cidade, Complemento e UF
+        // Sexta linha: Bairro, Cidade, Complemento e UF
         bairroLabel = new JLabel("Bairro:");
         bairroTxt = new JTextField(15);
         bairroTxt.setMinimumSize(new Dimension(180, bairroTxt.getPreferredSize().height));
@@ -458,7 +520,7 @@ public class ClientForm {
         ufComboBox = new JComboBox<>();
 
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         cadastroInputPanel.add(bairroLabel, gbc);
 
         gbc.gridx = 1;
@@ -482,10 +544,11 @@ public class ClientForm {
         gbc.gridx = 7;
         cadastroInputPanel.add(ufComboBox, gbc);
 
-        // Sexta linha: RG, CPF
+        // Sétima linha: RG, CPF
         rgLabel = new JLabel("RG:");
         try {
             MaskFormatter rgMaskFormatter = new MaskFormatter("UU-##.###.###*");
+            rgMaskFormatter.setValueContainsLiteralCharacters(false);
 
             rgTxt = new JFormattedTextField(rgMaskFormatter);
             rgTxt.setMinimumSize(new Dimension(180, rgTxt.getPreferredSize().height));
@@ -502,36 +565,12 @@ public class ClientForm {
             throw new RuntimeException(e);
         }
 
-        cpfLabel = new JLabel("CPF:");
-        try {
-            cpfTxt = new JFormattedTextField(new javax.swing.text.MaskFormatter("###.###.###-##"));
-            cpfTxt.setColumns(11);
-            cpfTxt.setMinimumSize(new Dimension(180, cpfTxt.getPreferredSize().height));
-            cpfTxt.setPreferredSize(new Dimension(250, cpfTxt.getPreferredSize().height));
-            cpfTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
-            cpfTxt.setName("CPF");
-
-            // Configurar o filtro de documento para permitir apenas dígitos
-            ((AbstractDocument) cpfTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
-
-            // Configurar o filtro de documento para limitar comprimento do texto
-            ((AbstractDocument) cpfTxt.getDocument()).setDocumentFilter(new LimitedLengthDocumentFilter(11));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         cadastroInputPanel.add(rgLabel, gbc);
 
         gbc.gridx = 1;
         cadastroInputPanel.add(rgTxt, gbc);
-
-        gbc.gridx = 2;
-        cadastroInputPanel.add(cpfLabel, gbc);
-
-        gbc.gridx = 3;
-        cadastroInputPanel.add(cpfTxt, gbc);
 
         cadastroPanel.add(cadastroInputPanel, BorderLayout.CENTER);
 

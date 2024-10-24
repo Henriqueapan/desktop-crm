@@ -2,6 +2,7 @@ package com.pancotti.henrique.sales.management.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Vector;
@@ -9,6 +10,7 @@ import java.util.Vector;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class ClientModel {
     private int id;
 
