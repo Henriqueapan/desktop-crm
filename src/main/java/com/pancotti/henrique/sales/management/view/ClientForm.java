@@ -14,11 +14,14 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.text.ParseException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 public class ClientForm {
     private static final int V_GAP_MAX_HEIGHT = 25;
+
+    private static final ClientDAO clientDao = new ClientDAO();
 
     private JFrame frame;
     private JPanel main;
@@ -51,7 +54,7 @@ public class ClientForm {
     private JLabel cidadeLabel;
     private JTextField complementoTxt;
     private JLabel complementoLabel;
-    private JTextField rgTxt;
+    private JFormattedTextField rgTxt;
     private JLabel rgLabel;
     private JFormattedTextField cpfTxt;
     private JLabel cpfLabel;
@@ -90,24 +93,64 @@ public class ClientForm {
     private class SaveButtonActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
+            final Map<String, String> fieldTextValues = new java.util.HashMap<>();
+
+            fieldTextValues.put(nomeTxt.getName(), getTextIfValid(nomeTxt, false));
+            fieldTextValues.put(rgTxt.getName(), getTextIfValid(rgTxt, false));
+            fieldTextValues.put(cpfTxt.getName(), getTextIfValid(cpfTxt, false));
+            fieldTextValues.put(emailTxt.getName(), getTextIfValid(emailTxt, false));
+            fieldTextValues.put(telefoneFixoTxt.getName(), getTextIfValid(telefoneFixoTxt, false));
+            fieldTextValues.put(celularTxt.getName(), getTextIfValid(celularTxt, false));
+            fieldTextValues.put(cepTxt.getName(), getTextIfValid(cepTxt, false));
+            fieldTextValues.put(enderecoTxt.getName(), getTextIfValid(enderecoTxt, false));
+            fieldTextValues.put(numTxt.getName(), getTextIfValid(numTxt, false));
+            fieldTextValues.put(complementoTxt.getName(), getTextIfValid(complementoTxt, false));
+            fieldTextValues.put(bairroTxt.getName(), getTextIfValid(bairroTxt, false));
+            fieldTextValues.put(cidadeTxt.getName(), getTextIfValid(cidadeTxt, false));
+
+            StringBuilder stringBuilder = new StringBuilder();
+
+            fieldTextValues.forEach((key, value) -> {
+                if (stringBuilder.isEmpty() && value == null)
+                    stringBuilder.append("O(s) seguinte(s) campo(s) não foram adequadamente preenchidos:\n\n");
+
+                if (value == null)
+                    stringBuilder.append(key).append(", ");
+            });
+
+            if (!stringBuilder.isEmpty()) {
+                JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
+                    stringBuilder.delete(stringBuilder.length() - 2, stringBuilder.length()).toString()
+                );
+
+                JOptionPane.showMessageDialog(
+                    null,
+                    errorTxtArea,
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+                );
+
+                return;
+            }
+
             try {
                 ClientModel client = new ClientModel(
-                    nomeTxt.getText(),
-                    rgTxt.getText(),
-                    cpfTxt.getText(),
-                    emailTxt.getText(),
-                    telefoneFixoTxt.getText(),
-                    celularTxt.getText(),
-                    cepTxt.getText(),
-                    enderecoTxt.getText(),
-                    Integer.parseInt(numTxt.getText()),
-                    complementoTxt.getText(),
-                    bairroTxt.getText(),
-                    cidadeTxt.getText(),
+                    fieldTextValues.get(nomeTxt.getName()),
+                    fieldTextValues.get(rgTxt.getName()),
+                    fieldTextValues.get(cpfTxt.getName()),
+                    fieldTextValues.get(emailTxt.getName()),
+                    fieldTextValues.get(telefoneFixoTxt.getName()),
+                    fieldTextValues.get(celularTxt.getName()),
+                    fieldTextValues.get(cepTxt.getName()),
+                    fieldTextValues.get(enderecoTxt.getName()),
+                    Integer.parseInt(fieldTextValues.get(numTxt.getName())),
+                    fieldTextValues.get(complementoTxt.getName()),
+                    fieldTextValues.get(bairroTxt.getName()),
+                    fieldTextValues.get(cidadeTxt.getName()),
                     Objects.requireNonNull(ufComboBox.getSelectedItem()).toString()
                 );
 
-                new ClientDAO().createClient(client);
+                clientDao.createClient(client);
 
                 JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso.");
             } catch (Exception exc) {
@@ -126,9 +169,44 @@ public class ClientForm {
         }
     }
 
+    private static String getTextIfValid(JTextComponent textComponent, boolean acceptEmpty) {
+        final String textContent = textComponent.getText();
+
+        if (textComponent instanceof JFormattedTextField) {
+            try {
+                // Tenta obter o valor formatado, lançará ParseException se estiver incompleto
+                ((JFormattedTextField)textComponent).commitEdit();
+                return textContent;
+            } catch (ParseException e) {
+                return null;
+            }
+        }
+
+        // JTextField
+        return (acceptEmpty || !textContent.trim().isEmpty()) ? textContent : null;
+    }
+
     private static JTextArea getErrorDialogJTextAreaContent(Exception exc, String contextMessage) {
         final String errorMessage =
             contextMessage + "\n\n" + exc.getClass().getSimpleName() + "\n\n" + exc.getLocalizedMessage();
+        final int COLUMN_WIDTH = 25;
+
+        JTextArea errorTxtArea = new JTextArea(errorMessage);
+        errorTxtArea.setColumns(COLUMN_WIDTH);
+        errorTxtArea.setRows(errorMessage.length() / COLUMN_WIDTH);
+        errorTxtArea.setEditable(false);
+        errorTxtArea.setLineWrap(true);
+        errorTxtArea.setWrapStyleWord(true);
+        errorTxtArea.setAlignmentX(Component.CENTER_ALIGNMENT);
+        errorTxtArea.setAlignmentY(Component.CENTER_ALIGNMENT);
+        errorTxtArea.setOpaque(false);
+        errorTxtArea.setSize(errorTxtArea.getPreferredSize().width, 1);
+        errorTxtArea.setBorder(new EmptyBorder(2, 2, 2, 2));
+
+        return errorTxtArea;
+    }
+
+    private static JTextArea getErrorDialogJTextAreaContent(String errorMessage) {
         final int COLUMN_WIDTH = 25;
 
         JTextArea errorTxtArea = new JTextArea(errorMessage);
@@ -189,6 +267,8 @@ public class ClientForm {
         codigoTxt = new JTextField(20);
         codigoTxt.setMinimumSize(new Dimension(180, codigoTxt.getPreferredSize().height));
         codigoTxt.setPreferredSize(new Dimension(250, codigoTxt.getPreferredSize().height));
+        codigoTxt.setName("Código");
+        codigoTxt.setEditable(false);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -202,6 +282,7 @@ public class ClientForm {
         nomeTxt = new JTextField(20);
         nomeTxt.setMinimumSize(new Dimension(180, nomeTxt.getPreferredSize().height));
         nomeTxt.setPreferredSize(new Dimension(250, nomeTxt.getPreferredSize().height));
+        nomeTxt.setName("Nome");
 
         pesquisarButton = new JButton("Pesquisar");
 
@@ -220,9 +301,9 @@ public class ClientForm {
         // Terceira linha: Email, Celular e Telefone Fixo
         emailLabel = new JLabel("E-mail:");
         emailTxt = new JTextField(20);
-
         emailTxt.setMinimumSize(new Dimension(180, emailTxt.getPreferredSize().height));
         emailTxt.setPreferredSize(new Dimension(250, emailTxt.getPreferredSize().height));
+        emailTxt.setName("E-mail");
 
         celularLabel = new JLabel("Celular:");
         telefoneFixoLabel = new JLabel("Telefone Fixo:");
@@ -232,6 +313,8 @@ public class ClientForm {
             celularTxt.setColumns(10);
             celularTxt.setMinimumSize(new Dimension(180, celularTxt.getPreferredSize().height));
             celularTxt.setPreferredSize(new Dimension(250, celularTxt.getPreferredSize().height));
+            celularTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            celularTxt.setName("Celular");
 
             // Configurar o filtro de documento para permitir apenas dígitos
             ((AbstractDocument) celularTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
@@ -240,6 +323,8 @@ public class ClientForm {
             telefoneFixoTxt.setColumns(9);
             telefoneFixoTxt.setMinimumSize(new Dimension(180, telefoneFixoTxt.getPreferredSize().height));
             telefoneFixoTxt.setPreferredSize(new Dimension(250, telefoneFixoTxt.getPreferredSize().height));
+            telefoneFixoTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            telefoneFixoTxt.setName("Telefone Fixo");
 
             // Configurar o filtro de documento para permitir apenas dígitos
             ((AbstractDocument) telefoneFixoTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
@@ -273,6 +358,8 @@ public class ClientForm {
             cepTxt.setColumns(8);
             cepTxt.setMinimumSize(new Dimension(180, cepTxt.getPreferredSize().height));
             cepTxt.setPreferredSize(new Dimension(250, cepTxt.getPreferredSize().height));
+            cepTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            cepTxt.setName("CEP");
 
             // Configurar o filtro de documento para permitir apenas dígitos
             ((AbstractDocument) cepTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
@@ -284,11 +371,13 @@ public class ClientForm {
         enderecoTxt = new JTextField(20);
         enderecoTxt.setMinimumSize(new Dimension(180, enderecoTxt.getPreferredSize().height));
         enderecoTxt.setPreferredSize(new Dimension(250, enderecoTxt.getPreferredSize().height));
+        enderecoTxt.setName("Endereço");
 
         numLabel = new JLabel("Número:");
         numTxt = new JTextField(7);
         numTxt.setMinimumSize(new Dimension(80, numTxt.getPreferredSize().height));
         numTxt.setPreferredSize(new Dimension(130, numTxt.getPreferredSize().height));
+        numTxt.setName("Número");
 
         // Configurar o filtro de documento para permitir apenas dígitos
         ((AbstractDocument) numTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
@@ -317,16 +406,19 @@ public class ClientForm {
         bairroTxt = new JTextField(15);
         bairroTxt.setMinimumSize(new Dimension(180, bairroTxt.getPreferredSize().height));
         bairroTxt.setPreferredSize(new Dimension(250, bairroTxt.getPreferredSize().height));
+        bairroTxt.setName("Bairro");
 
         cidadeLabel = new JLabel("Cidade:");
         cidadeTxt = new JTextField(15);
         cidadeTxt.setMinimumSize(new Dimension(180, cidadeTxt.getPreferredSize().height));
         cidadeTxt.setPreferredSize(new Dimension(250, cidadeTxt.getPreferredSize().height));
+        cidadeTxt.setName("Cidade");
 
         complementoLabel = new JLabel("Complemento:");
         complementoTxt = new JTextField(15);
         complementoTxt.setMinimumSize(new Dimension(180, complementoTxt.getPreferredSize().height));
         complementoTxt.setPreferredSize(new Dimension(250, complementoTxt.getPreferredSize().height));
+        complementoTxt.setName("Complemento");
 
         ufLabel = new JLabel("UF:");
         ufComboBox = new JComboBox<>();
@@ -358,12 +450,20 @@ public class ClientForm {
 
         // Sexta linha: RG, CPF
         rgLabel = new JLabel("RG:");
-        rgTxt = new JTextField(10);
-        rgTxt.setMinimumSize(new Dimension(180, rgTxt.getPreferredSize().height));
-        rgTxt.setPreferredSize(new Dimension(250, rgTxt.getPreferredSize().height));
+        try {
+            MaskFormatter rgMaskFormatter = new MaskFormatter("UU-##.###.###*");
 
-        // Configurar o filtro de documento para permitir apenas dígitos
-        ((AbstractDocument) rgTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+            rgTxt = new JFormattedTextField(rgMaskFormatter);
+            rgTxt.setMinimumSize(new Dimension(180, rgTxt.getPreferredSize().height));
+            rgTxt.setPreferredSize(new Dimension(250, rgTxt.getPreferredSize().height));
+            rgTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            rgTxt.setName("RG");
+
+            // Configurar o filtro de documento para permitir apenas dígitos
+            ((AbstractDocument) rgTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
 
         cpfLabel = new JLabel("CPF:");
         try {
@@ -371,6 +471,8 @@ public class ClientForm {
             cpfTxt.setColumns(11);
             cpfTxt.setMinimumSize(new Dimension(180, cpfTxt.getPreferredSize().height));
             cpfTxt.setPreferredSize(new Dimension(250, cpfTxt.getPreferredSize().height));
+            cpfTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            cpfTxt.setName("CPF");
 
             // Configurar o filtro de documento para permitir apenas dígitos
             ((AbstractDocument) cpfTxt.getDocument()).setDocumentFilter(digitsOnlyDocumentFilter);
@@ -446,6 +548,7 @@ public class ClientForm {
         JPanel consultaTopPanel = new JPanel(new FlowLayout());
 
         consultaNomeTxt = new JTextField(15);
+
         consultaPesquisarButton = new JButton("Pesquisar");
 
         consultaTopPanel.add(new JLabel("Nome:"));
