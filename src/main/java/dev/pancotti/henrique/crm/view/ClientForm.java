@@ -28,6 +28,9 @@ public class ClientForm {
 
     private ClientModel currentEditedClient;
 
+    private Font formFont;
+    private Font tableFont;
+
     private JFrame frame;
     private final JPanel main;
     private JLabel headerStringLabel;
@@ -65,6 +68,7 @@ public class ClientForm {
     private JLabel cpfLabel;
     private JPanel saveButtonPanel;
     private JButton saveButton;
+    private JButton deleteButton;
     private JButton cancelUpdateButton;
 
     private JTextField consultaNomeTxt;
@@ -273,7 +277,14 @@ public class ClientForm {
                 currentEditedClient = client;
 
                 saveButton.setText("Salvar Edição");
+
+                deleteButton.setFont(formFont);
+                cancelUpdateButton.setFont(formFont);
+
                 saveButtonPanel.add(cancelUpdateButton);
+                saveButtonPanel.add(deleteButton);
+
+                deleteButton.setVisible(true);
                 cancelUpdateButton.setVisible(true);
 
             } catch (SQLException exc) {
@@ -294,27 +305,65 @@ public class ClientForm {
 
     private class FormCancelEditButtonActionListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
-            codigoTxt.setText("");
-            cpfTxt.setText("");
-            nomeTxt.setText("");
-            emailTxt.setText("");
-            celularTxt.setValue("");
-            telefoneFixoTxt.setValue("");
-            cepTxt.setValue("");
-            enderecoTxt.setText("");
-            numTxt.setText("");
-            bairroTxt.setText("");
-            cidadeTxt.setText("");
-            complementoTxt.setText("");
-            ufComboBox.setSelectedItem("");
-            rgTxt.setValue("");
+            clearInputs();
 
             formInEditMode = false;
             currentEditedClient = null;
 
             saveButton.setText("Cadastrar");
+
             cancelUpdateButton.setVisible(false);
+            deleteButton.setVisible(false);
             saveButtonPanel.remove(cancelUpdateButton);
+            saveButtonPanel.remove(deleteButton);
+        }
+    }
+
+
+    private class FormDeleteButtonActionListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            final int deletionConfirmResponse = JOptionPane.showConfirmDialog(
+                null,
+                "Tem certeza de que deseja excluir o cliente com CPF "
+                    + currentEditedClient.getCpf() + " do banco de dados?",
+                "Confirmar ação",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (deletionConfirmResponse != JOptionPane.YES_OPTION)
+                return;
+
+            try {
+                clientDao.delete(currentEditedClient);
+
+                clearInputs();
+
+                formInEditMode = false;
+                currentEditedClient = null;
+
+                saveButton.setText("Cadastrar");
+
+                cancelUpdateButton.setVisible(false);
+                deleteButton.setVisible(false);
+                saveButtonPanel.remove(cancelUpdateButton);
+                saveButtonPanel.remove(deleteButton);
+
+                JOptionPane.showMessageDialog(null, "Cliente excluído com sucesso.");
+            } catch (SQLException exc) {
+                JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
+                    exc,
+                    "Houve um erro ao tentar excluir o cliente:"
+                );
+
+                JOptionPane.showMessageDialog(
+                    null,
+                    errorTxtArea,
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
+
         }
     }
 
@@ -372,6 +421,23 @@ public class ClientForm {
         }
     }
 
+    private void clearInputs() {
+        codigoTxt.setText("");
+        cpfTxt.setText("");
+        nomeTxt.setText("");
+        emailTxt.setText("");
+        celularTxt.setValue("");
+        telefoneFixoTxt.setValue("");
+        cepTxt.setValue("");
+        enderecoTxt.setText("");
+        numTxt.setText("");
+        bairroTxt.setText("");
+        cidadeTxt.setText("");
+        complementoTxt.setText("");
+        ufComboBox.setSelectedItem("");
+        rgTxt.setValue("");
+    }
+
     private static String getTextIfValid(JTextComponent textComponent, boolean acceptEmpty) {
         if (textComponent instanceof JFormattedTextField) {
             try {
@@ -412,11 +478,13 @@ public class ClientForm {
     }
 
     public void setFormFont(Font font) {
-        setFontForChildComponents(main, font);
+        this.formFont = font;
+        setFontForChildComponents(main, this.formFont);
     }
 
     public void setTableFont(Font font) {
-        setFontForChildComponents(consultaTable, font);
+        this.tableFont = font;
+        setFontForChildComponents(consultaTable, this.tableFont);
     }
 
     public ClientForm() {
@@ -715,12 +783,18 @@ public class ClientForm {
         saveButton.setPreferredSize(new Dimension(150, saveButton.getPreferredSize().height));
         saveButton.setMaximumSize(new Dimension(400, saveButton.getPreferredSize().height));
 
+        deleteButton = new JButton("Excluir");
+        deleteButton.setPreferredSize(new Dimension(150, deleteButton.getPreferredSize().height));
+        deleteButton.setMaximumSize(new Dimension(400, deleteButton.getPreferredSize().height));
+        deleteButton.setBackground(Color.RED);
+
         cancelUpdateButton = new JButton("X");
         cancelUpdateButton.setPreferredSize(new Dimension(50, cancelUpdateButton.getPreferredSize().height));
         cancelUpdateButton.setMaximumSize(new Dimension(50, cancelUpdateButton.getPreferredSize().height));
 
         saveButton.addActionListener(new SaveButtonActionListener());
         cancelUpdateButton.addActionListener(new FormCancelEditButtonActionListener());
+        deleteButton.addActionListener(new FormDeleteButtonActionListener());
 
         saveButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         saveButtonPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
