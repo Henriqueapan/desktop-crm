@@ -49,7 +49,7 @@ public class ClientDAO {
 
     private final String SQL_UPDATE_QUERY = """
     UPDATE tb_clientes
-    SET (
+    SET
         NOME=?,
         RG=?,
         CPF=?,
@@ -63,7 +63,6 @@ public class ClientDAO {
         BAIRRO=?,
         CIDADE=?,
         ESTADO=?
-    )
     WHERE ID=?
     """;
 
@@ -167,7 +166,7 @@ public class ClientDAO {
                 clientRs.getInt("id"),
                 clientRs.getString("nome"),
                 clientRs.getString("rg"),
-                clientRs.getString("nome"),
+                clientRs.getString("cpf"),
                 clientRs.getString("email"),
                 clientRs.getString("telefone"),
                 clientRs.getString("celular"),

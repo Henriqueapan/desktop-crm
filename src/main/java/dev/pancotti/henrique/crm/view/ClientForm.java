@@ -24,6 +24,10 @@ public class ClientForm {
 
     private static final ClientDAO clientDao = new ClientDAO();
 
+    private boolean formInEditMode = false;
+
+    private ClientModel currentEditedClient;
+
     private JFrame frame;
     private final JPanel main;
     private JLabel headerStringLabel;
@@ -61,6 +65,7 @@ public class ClientForm {
     private JLabel cpfLabel;
     private JPanel saveButtonPanel;
     private JButton saveButton;
+    private JButton cancelUpdateButton;
 
     private JTextField consultaNomeTxt;
     private JButton consultaPesquisarButton;
@@ -158,29 +163,49 @@ public class ClientForm {
             }
 
             try {
-                ClientModel client = new ClientModel(
-                    fieldTextValues.get(nomeTxt.getName()),
-                    fieldTextValues.get(rgTxt.getName()),
-                    fieldTextValues.get(cpfTxt.getName()),
-                    fieldTextValues.get(emailTxt.getName()),
-                    fieldTextValues.get(telefoneFixoTxt.getName()),
-                    fieldTextValues.get(celularTxt.getName()),
-                    fieldTextValues.get(cepTxt.getName()),
-                    fieldTextValues.get(enderecoTxt.getName()),
-                    Integer.parseInt(fieldTextValues.get(numTxt.getName())),
-                    fieldTextValues.get(complementoTxt.getName()),
-                    fieldTextValues.get(bairroTxt.getName()),
-                    fieldTextValues.get(cidadeTxt.getName()),
-                    Objects.requireNonNull(ufComboBox.getSelectedItem()).toString()
-                );
+                if (currentEditedClient == null) {
+                    final ClientModel client = new ClientModel(
+                        fieldTextValues.get(nomeTxt.getName()),
+                        fieldTextValues.get(rgTxt.getName()),
+                        fieldTextValues.get(cpfTxt.getName()),
+                        fieldTextValues.get(emailTxt.getName()),
+                        fieldTextValues.get(telefoneFixoTxt.getName()),
+                        fieldTextValues.get(celularTxt.getName()),
+                        fieldTextValues.get(cepTxt.getName()),
+                        fieldTextValues.get(enderecoTxt.getName()),
+                        Integer.parseInt(fieldTextValues.get(numTxt.getName())),
+                        fieldTextValues.get(complementoTxt.getName()),
+                        fieldTextValues.get(bairroTxt.getName()),
+                        fieldTextValues.get(cidadeTxt.getName()),
+                        Objects.requireNonNull(ufComboBox.getSelectedItem()).toString()
+                    );
 
-                clientDao.create(client);
+                    clientDao.create(client);
+                    JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso.");
+                } else {
+                    currentEditedClient.setNome(fieldTextValues.get(nomeTxt.getName()));
+                    currentEditedClient.setRg(fieldTextValues.get(rgTxt.getName()));
+                    currentEditedClient.setEmail(fieldTextValues.get(emailTxt.getName()));
+                    currentEditedClient.setTelefone(fieldTextValues.get(telefoneFixoTxt.getName()));
+                    currentEditedClient.setCelular(fieldTextValues.get(celularTxt.getName()));
+                    currentEditedClient.setCep(fieldTextValues.get(cepTxt.getName()));
+                    currentEditedClient.setEndereco(fieldTextValues.get(enderecoTxt.getName()));
+                    currentEditedClient.setNumero(Integer.parseInt(fieldTextValues.get(numTxt.getName())));
+                    currentEditedClient.setComplemento(fieldTextValues.get(complementoTxt.getName()));
+                    currentEditedClient.setBairro(fieldTextValues.get(bairroTxt.getName()));
+                    currentEditedClient.setCidade(fieldTextValues.get(cidadeTxt.getName()));
+                    currentEditedClient.setEstado(Objects.requireNonNull(ufComboBox.getSelectedItem()).toString());
 
-//                JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso.");
+                    clientDao.update(currentEditedClient);
+                    JOptionPane.showMessageDialog(null, "Cliente atualizado com sucesso.");
+                }
+
             } catch (SQLException exc) {
                 JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
                     exc,
-                    "Houve um erro ao cadastrar o cliente:"
+                    currentEditedClient == null
+                        ? "Houve um erro ao cadastrar o cliente:"
+                        : "Houve um erro ao atualizar o cliente:"
                 );
 
                 JOptionPane.showMessageDialog(
@@ -197,7 +222,20 @@ public class ClientForm {
         public void actionPerformed(ActionEvent e) {
             String cpfTextValue = getTextIfValid(cpfTxt, false);
 
-            if (cpfTextValue == null || cpfTextValue.isBlank()) return;
+            if (cpfTextValue == null || cpfTextValue.isBlank()) {
+                JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
+                    "O campo CPF deve ser apropriadamente preenchido para pesquisar os dados de um cliente."
+                );
+
+                JOptionPane.showMessageDialog(
+                    null,
+                    errorTxtArea,
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+                );
+
+                return;
+            };
 
             try {
                 ClientModel client = clientDao.findByCpf(cpfTextValue);
@@ -230,6 +268,14 @@ public class ClientForm {
                 complementoTxt.setText(client.getComplemento());
                 ufComboBox.setSelectedItem(client.getEstado());
                 rgTxt.setValue(client.getRg());
+
+                formInEditMode = true;
+                currentEditedClient = client;
+
+                saveButton.setText("Salvar Edição");
+                saveButtonPanel.add(cancelUpdateButton);
+                cancelUpdateButton.setVisible(true);
+
             } catch (SQLException exc) {
                 JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
                     exc,
@@ -242,9 +288,33 @@ public class ClientForm {
                     "Erro",
                     JOptionPane.ERROR_MESSAGE
                 );
-
-                return;
             }
+        }
+    }
+
+    private class FormCancelEditButtonActionListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            codigoTxt.setText("");
+            cpfTxt.setText("");
+            nomeTxt.setText("");
+            emailTxt.setText("");
+            celularTxt.setValue("");
+            telefoneFixoTxt.setValue("");
+            cepTxt.setValue("");
+            enderecoTxt.setText("");
+            numTxt.setText("");
+            bairroTxt.setText("");
+            cidadeTxt.setText("");
+            complementoTxt.setText("");
+            ufComboBox.setSelectedItem("");
+            rgTxt.setValue("");
+
+            formInEditMode = false;
+            currentEditedClient = null;
+
+            saveButton.setText("Cadastrar");
+            cancelUpdateButton.setVisible(false);
+            saveButtonPanel.remove(cancelUpdateButton);
         }
     }
 
@@ -387,7 +457,7 @@ public class ClientForm {
             cpfTxt.setColumns(11);
             cpfTxt.setMinimumSize(new Dimension(180, cpfTxt.getPreferredSize().height));
             cpfTxt.setPreferredSize(new Dimension(250, cpfTxt.getPreferredSize().height));
-            cpfTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            cpfTxt.setFocusLostBehavior(JFormattedTextField.PERSIST);
             cpfTxt.setName("CPF");
 
             // Configurar o filtro de documento para permitir apenas dígitos
@@ -452,7 +522,7 @@ public class ClientForm {
             celularTxt.setColumns(10);
             celularTxt.setMinimumSize(new Dimension(180, celularTxt.getPreferredSize().height));
             celularTxt.setPreferredSize(new Dimension(250, celularTxt.getPreferredSize().height));
-            celularTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            celularTxt.setFocusLostBehavior(JFormattedTextField.PERSIST);
             celularTxt.setName("Celular");
 
             // Configurar o filtro de documento para permitir apenas dígitos
@@ -466,7 +536,7 @@ public class ClientForm {
             telefoneFixoTxt.setColumns(9);
             telefoneFixoTxt.setMinimumSize(new Dimension(180, telefoneFixoTxt.getPreferredSize().height));
             telefoneFixoTxt.setPreferredSize(new Dimension(250, telefoneFixoTxt.getPreferredSize().height));
-            telefoneFixoTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            telefoneFixoTxt.setFocusLostBehavior(JFormattedTextField.PERSIST);
             telefoneFixoTxt.setName("Telefone Fixo");
 
             // Configurar o filtro de documento para permitir apenas dígitos
@@ -505,7 +575,7 @@ public class ClientForm {
             cepTxt.setColumns(8);
             cepTxt.setMinimumSize(new Dimension(180, cepTxt.getPreferredSize().height));
             cepTxt.setPreferredSize(new Dimension(250, cepTxt.getPreferredSize().height));
-            cepTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            cepTxt.setFocusLostBehavior(JFormattedTextField.PERSIST);
             cepTxt.setName("CEP");
 
             // Configurar o filtro de documento para permitir apenas dígitos
@@ -619,7 +689,7 @@ public class ClientForm {
             rgTxt = new JFormattedTextField(rgMaskFormatter);
             rgTxt.setMinimumSize(new Dimension(180, rgTxt.getPreferredSize().height));
             rgTxt.setPreferredSize(new Dimension(250, rgTxt.getPreferredSize().height));
-            rgTxt.setFocusLostBehavior(JFormattedTextField.COMMIT_OR_REVERT);
+            rgTxt.setFocusLostBehavior(JFormattedTextField.PERSIST);
             rgTxt.setName("RG");
 
             // Configurar o filtro de documento para permitir apenas dígitos
@@ -644,6 +714,13 @@ public class ClientForm {
         saveButton = new JButton("Cadastrar");
         saveButton.setPreferredSize(new Dimension(150, saveButton.getPreferredSize().height));
         saveButton.setMaximumSize(new Dimension(400, saveButton.getPreferredSize().height));
+
+        cancelUpdateButton = new JButton("X");
+        cancelUpdateButton.setPreferredSize(new Dimension(50, cancelUpdateButton.getPreferredSize().height));
+        cancelUpdateButton.setMaximumSize(new Dimension(50, cancelUpdateButton.getPreferredSize().height));
+
+        saveButton.addActionListener(new SaveButtonActionListener());
+        cancelUpdateButton.addActionListener(new FormCancelEditButtonActionListener());
 
         saveButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         saveButtonPanel.setBorder(new EmptyBorder(0, 0, 15, 0));
@@ -682,8 +759,6 @@ public class ClientForm {
             "TO"  // Tocantins
         );
         UF_SET.stream().sorted().forEach(uf -> this.ufComboBox.addItem(uf));
-
-        saveButton.addActionListener(new SaveButtonActionListener());
 
         // Adicionar aba de cadastro
         tabbedPane.addTab("Cadastro", cadastroPanel);

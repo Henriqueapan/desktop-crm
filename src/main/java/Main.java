@@ -19,13 +19,5 @@ public class Main {
         modernForm.setFormFont(new Font("Arial", Font.PLAIN, 20));
         modernForm.setTableFont(new Font("Arial", Font.PLAIN, 12));
 
-//        UIManager.setLookAndFeel(new MaterialLookAndFeel(new JMarsDarkTheme()));
-//        ClientForm cf = new ClientForm();
-//        cf.pack();
-//        cf.setVisible(true);
-//        cf.setLocationRelativeTo(null);
-//        cf.setMinimumSize(new Dimension(1000, 600));
-//        UIManager.installLookAndFeel("Material Design", MaterialLookAndFeel.class.getSimpleName());
-//        System.out.println(Arrays.toString(UIManager.getInstalledLookAndFeels()));
     }
 }
