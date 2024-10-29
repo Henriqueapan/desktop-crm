@@ -4,6 +4,7 @@ import com.pancotti.henrique.sales.management.dao.ClientDAO;
 import com.pancotti.henrique.sales.management.model.ClientModel;
 
 import javax.swing.*;
+import java.sql.SQLException;
 
 public class ConnectionTester {
     public static void main(String[] args) {
@@ -33,6 +34,8 @@ public class ConnectionTester {
 //            JOptionPane.showMessageDialog(null, "Conectado");
         } catch (RuntimeException runtimeException) {
             JOptionPane.showMessageDialog(null, runtimeException.getCause().getMessage());
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
         }
     }
 }

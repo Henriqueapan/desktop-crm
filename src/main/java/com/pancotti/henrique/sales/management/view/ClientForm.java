@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.*;
 import java.util.List;
@@ -176,7 +177,7 @@ public class ClientForm {
                 clientDao.create(client);
 
 //                JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso.");
-            } catch (Exception exc) {
+            } catch (SQLException exc) {
                 JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
                     exc,
                     "Houve um erro ao cadastrar o cliente:"
@@ -198,24 +199,52 @@ public class ClientForm {
 
             if (cpfTextValue == null || cpfTextValue.isBlank()) return;
 
-            ClientModel client = clientDao.findByCpf(cpfTextValue);
+            try {
+                ClientModel client = clientDao.findByCpf(cpfTextValue);
 
-            if(client == null)
+                if (client == null) {
+                    JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
+                        "Não há cliente com CPF '" + cpfTextValue + "' cadastrado."
+                    );
+
+                    JOptionPane.showMessageDialog(
+                        null,
+                        errorTxtArea,
+                        "Erro",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+
+                    return;
+                }
+
+                codigoTxt.setText(String.valueOf(client.getId()));
+                nomeTxt.setText(client.getNome());
+                emailTxt.setText(client.getEmail());
+                celularTxt.setValue(client.getCelular());
+                telefoneFixoTxt.setValue(client.getTelefone());
+                cepTxt.setValue(client.getCep());
+                enderecoTxt.setText(client.getEndereco());
+                numTxt.setText(String.valueOf(client.getNumero()));
+                bairroTxt.setText(client.getBairro());
+                cidadeTxt.setText(client.getCidade());
+                complementoTxt.setText(client.getComplemento());
+                ufComboBox.setSelectedItem(client.getEstado());
+                rgTxt.setValue(client.getRg());
+            } catch (SQLException exc) {
+                JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
+                    exc,
+                    "Houve um erro ao tentar buscar o cliente:"
+                );
+
+                JOptionPane.showMessageDialog(
+                    null,
+                    errorTxtArea,
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+                );
+
                 return;
-
-            codigoTxt.setText(String.valueOf(client.getId()));
-            nomeTxt.setText(client.getNome());
-            emailTxt.setText(client.getEmail());
-            celularTxt.setValue(client.getCelular());
-            telefoneFixoTxt.setValue(client.getTelefone());
-            cepTxt.setValue(client.getCep());
-            enderecoTxt.setText(client.getEndereco());
-            numTxt.setText(String.valueOf(client.getNumero()));
-            bairroTxt.setText(client.getBairro());
-            cidadeTxt.setText(client.getCidade());
-            complementoTxt.setText(client.getComplemento());
-            ufComboBox.setSelectedItem(client.getEstado());
-            rgTxt.setValue(client.getRg());
+            }
         }
     }
 
@@ -225,12 +254,49 @@ public class ClientForm {
 
             String consultaNomeTextValue = consultaNomeTxt.getText();
 
-            List<ClientModel> clients = (consultaNomeTextValue == null || consultaNomeTextValue.isBlank())
-                ? clientDao.findAll()
-                : clientDao.findByNome(consultaNomeTextValue);
+            boolean searchForAllClients = (consultaNomeTextValue == null || consultaNomeTextValue.isBlank());
 
-            if(clients.isEmpty())
+            List<ClientModel> clients = null;
+            try {
+                clients = searchForAllClients
+                    ? clientDao.findAll()
+                    : clientDao.findByNome(consultaNomeTextValue);
+            } catch (SQLException exc) {
+                JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
+                    exc,
+                    searchForAllClients
+                        ? "Houve um erro ao tentar buscar os clientes:"
+                        : "Houve um erro ao tentar buscar o cliente:"
+                );
+
+                JOptionPane.showMessageDialog(
+                    null,
+                    errorTxtArea,
+                    "Erro",
+                    JOptionPane.ERROR_MESSAGE
+                );
+
                 return;
+            }
+
+            if(clients.isEmpty()) {
+                if (searchForAllClients)
+                    JOptionPane.showMessageDialog(null, "Não há clientes cadastrados");
+
+                else {
+                    JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
+                        "Não há clientes com nome contendo '" + consultaNomeTextValue + "' cadastrados."
+                    );
+
+                    JOptionPane.showMessageDialog(
+                        null,
+                        errorTxtArea,
+                        "Erro",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
+                return;
+            }
 
             clients.forEach(client -> consultaTableModel.addRow(client.toVector()));
         }

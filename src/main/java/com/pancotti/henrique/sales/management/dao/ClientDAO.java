@@ -78,271 +78,174 @@ public class ClientDAO {
         this.connection = new ConnectionFactory().getConnection();
     }
 
-    public void create(ClientModel client) {
-        try {
-            PreparedStatement stmt = connection.prepareStatement(
-                SQL_CREATE_QUERY
-            );
-            stmt.setString(1, client.getNome());
-            stmt.setString(2, client.getRg());
-            stmt.setString(3, client.getCpf());
-            stmt.setString(4, client.getEmail());
-            stmt.setString(5, client.getTelefone());
-            stmt.setString(6, client.getCelular());
-            stmt.setString(7, client.getCep());
-            stmt.setString(8, client.getEndereco());
-            stmt.setInt(9, client.getNumero());
-            stmt.setString(10, client.getComplemento());
-            stmt.setString(11, client.getBairro());
-            stmt.setString(12, client.getCidade());
-            stmt.setString(13, client.getEstado());
+    public void create(ClientModel client) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(
+            SQL_CREATE_QUERY
+        );
+        stmt.setString(1, client.getNome());
+        stmt.setString(2, client.getRg());
+        stmt.setString(3, client.getCpf());
+        stmt.setString(4, client.getEmail());
+        stmt.setString(5, client.getTelefone());
+        stmt.setString(6, client.getCelular());
+        stmt.setString(7, client.getCep());
+        stmt.setString(8, client.getEndereco());
+        stmt.setInt(9, client.getNumero());
+        stmt.setString(10, client.getComplemento());
+        stmt.setString(11, client.getBairro());
+        stmt.setString(12, client.getCidade());
+        stmt.setString(13, client.getEstado());
 
-            stmt.execute();
+        stmt.execute();
 
-            JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso");
-        } catch (SQLException e) {
-            JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
-                e,
-                "Erro ao tentar cadastrar o novo cliente:"
-            );
-
-            JOptionPane.showMessageDialog(
-                null,
-                errorTxtArea,
-                "Erro",
-                JOptionPane.ERROR_MESSAGE
-            );
-        }
+        JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso");
     }
 
-    public List<ClientModel> findAll() {
-        try {
-            PreparedStatement stmt = connection.prepareStatement(SQL_FIND_ALL_QUERY);
-            ResultSet allClientRs = stmt.executeQuery();
-            List<ClientModel> clients = new ArrayList<>();
+    public List<ClientModel> findAll() throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(SQL_FIND_ALL_QUERY);
+        ResultSet allClientRs = stmt.executeQuery();
+        List<ClientModel> clients = new ArrayList<>();
 
-            while (allClientRs.next()) {
-                final ClientModel client = new ClientModel(
-                    allClientRs.getInt("id"),
-                    allClientRs.getString("nome"),
-                    allClientRs.getString("rg"),
-                    allClientRs.getString("cpf"),
-                    allClientRs.getString("email"),
-                    allClientRs.getString("telefone"),
-                    allClientRs.getString("celular"),
-                    allClientRs.getString("cep"),
-                    allClientRs.getString("endereco"),
-                    allClientRs.getInt("numero"),
-                    allClientRs.getString("complemento"),
-                    allClientRs.getString("bairro"),
-                    allClientRs.getString("cidade"),
-                    allClientRs.getString("estado")
-                );
-
-                clients.add(client);
-            }
-
-            if (clients.isEmpty()){
-                JOptionPane.showMessageDialog(null, "Não há clientes cadastrados");
-                return List.of();
-            }
-
-            return clients;
-
-        } catch (SQLException exc) {
-            JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
-                exc,
-                "Houve um erro ao tentar buscar os clientes:"
+        while (allClientRs.next()) {
+            final ClientModel client = new ClientModel(
+                allClientRs.getInt("id"),
+                allClientRs.getString("nome"),
+                allClientRs.getString("rg"),
+                allClientRs.getString("cpf"),
+                allClientRs.getString("email"),
+                allClientRs.getString("telefone"),
+                allClientRs.getString("celular"),
+                allClientRs.getString("cep"),
+                allClientRs.getString("endereco"),
+                allClientRs.getInt("numero"),
+                allClientRs.getString("complemento"),
+                allClientRs.getString("bairro"),
+                allClientRs.getString("cidade"),
+                allClientRs.getString("estado")
             );
 
-            JOptionPane.showMessageDialog(
-                null,
-                errorTxtArea,
-                "Erro",
-                JOptionPane.ERROR_MESSAGE
-            );
-
-            return List.of();
+            clients.add(client);
         }
+
+        return clients;
     }
 
-    public List<ClientModel> findByNome(String nome) {
-        try {
-            PreparedStatement stmt = connection.prepareStatement(SQL_FIND_BY_NOME_LIKENESS_QUERY);
-            stmt.setString(1, nome);
-            ResultSet clientRs = stmt.executeQuery();
+    public List<ClientModel> findByNome(String nome) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(SQL_FIND_BY_NOME_LIKENESS_QUERY);
+        stmt.setString(1, nome);
+        ResultSet clientRs = stmt.executeQuery();
 
-            List<ClientModel> clients = new ArrayList<>();
+        List<ClientModel> clients = new ArrayList<>();
 
-            while (clientRs.next()) {
-                clients.add(new ClientModel(
-                    clientRs.getInt("id"),
-                    clientRs.getString("nome"),
-                    clientRs.getString("rg"),
-                    clientRs.getString("nome"),
-                    clientRs.getString("email"),
-                    clientRs.getString("telefone"),
-                    clientRs.getString("celular"),
-                    clientRs.getString("cep"),
-                    clientRs.getString("endereco"),
-                    clientRs.getInt("numero"),
-                    clientRs.getString("complemento"),
-                    clientRs.getString("bairro"),
-                    clientRs.getString("cidade"),
-                    clientRs.getString("estado")
-                ));
-            }
-
-            if (clients.isEmpty()){
-                JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
-                    "Não há clientes com nome contendo '" + nome + "' cadastrados."
-                );
-
-                JOptionPane.showMessageDialog(
-                    null,
-                    errorTxtArea,
-                    "Erro",
-                    JOptionPane.ERROR_MESSAGE
-                );
-
-                return List.of();
-            }
-
-            return clients;
-        } catch (SQLException exc) {
-            JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
-                exc,
-                "Houve um erro ao tentar buscar o cliente:"
-            );
-
-            JOptionPane.showMessageDialog(
-                null,
-                errorTxtArea,
-                "Erro",
-                JOptionPane.ERROR_MESSAGE
-            );
-
-            return List.of();
+        while (clientRs.next()) {
+            clients.add(new ClientModel(
+                clientRs.getInt("id"),
+                clientRs.getString("nome"),
+                clientRs.getString("rg"),
+                clientRs.getString("nome"),
+                clientRs.getString("email"),
+                clientRs.getString("telefone"),
+                clientRs.getString("celular"),
+                clientRs.getString("cep"),
+                clientRs.getString("endereco"),
+                clientRs.getInt("numero"),
+                clientRs.getString("complemento"),
+                clientRs.getString("bairro"),
+                clientRs.getString("cidade"),
+                clientRs.getString("estado")
+            ));
         }
+
+        return clients;
     }
 
-    public ClientModel findByCpf(String cpf) {
-        try {
-            PreparedStatement stmt = connection.prepareStatement(SQL_FIND_BY_CPF_QUERY);
-            stmt.setString(1, cpf);
-            ResultSet clientRs = stmt.executeQuery();
+    public ClientModel findByCpf(String cpf) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(SQL_FIND_BY_CPF_QUERY);
+        stmt.setString(1, cpf);
+        ResultSet clientRs = stmt.executeQuery();
 
-            if (clientRs.next()) {
-                return new ClientModel(
-                    clientRs.getInt("id"),
-                    clientRs.getString("nome"),
-                    clientRs.getString("rg"),
-                    clientRs.getString("nome"),
-                    clientRs.getString("email"),
-                    clientRs.getString("telefone"),
-                    clientRs.getString("celular"),
-                    clientRs.getString("cep"),
-                    clientRs.getString("endereco"),
-                    clientRs.getInt("numero"),
-                    clientRs.getString("complemento"),
-                    clientRs.getString("bairro"),
-                    clientRs.getString("cidade"),
-                    clientRs.getString("estado")
-                );
-            }
-            else {
-                JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
-                    "Não há cliente com CPF '" + cpf + "' cadastrado."
-                );
-
-                JOptionPane.showMessageDialog(
-                    null,
-                    errorTxtArea,
-                    "Erro",
-                    JOptionPane.ERROR_MESSAGE
-                );
-
-                return null;
-            }
-        } catch (SQLException exc) {
-            JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
-                exc,
-                "Houve um erro ao tentar buscar o cliente:"
+        if (clientRs.next()) {
+            return new ClientModel(
+                clientRs.getInt("id"),
+                clientRs.getString("nome"),
+                clientRs.getString("rg"),
+                clientRs.getString("nome"),
+                clientRs.getString("email"),
+                clientRs.getString("telefone"),
+                clientRs.getString("celular"),
+                clientRs.getString("cep"),
+                clientRs.getString("endereco"),
+                clientRs.getInt("numero"),
+                clientRs.getString("complemento"),
+                clientRs.getString("bairro"),
+                clientRs.getString("cidade"),
+                clientRs.getString("estado")
             );
-
-            JOptionPane.showMessageDialog(
-                null,
-                errorTxtArea,
-                "Erro",
-                JOptionPane.ERROR_MESSAGE
-            );
-
-            return null;
         }
+        else return null;
     }
 
-    public void update(ClientModel client) {
-        try {
-            PreparedStatement stmt = connection.prepareStatement(
-                SQL_UPDATE_QUERY
-            );
+    public void update(ClientModel client) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(
+            SQL_UPDATE_QUERY
+        );
 
-            stmt.setString(1, client.getNome());
-            stmt.setString(2, client.getRg());
-            stmt.setString(3, client.getCpf());
-            stmt.setString(4, client.getEmail());
-            stmt.setString(5, client.getTelefone());
-            stmt.setString(6, client.getCelular());
-            stmt.setString(7, client.getCep());
-            stmt.setString(8, client.getEndereco());
-            stmt.setInt(9, client.getNumero());
-            stmt.setString(10, client.getComplemento());
-            stmt.setString(11, client.getBairro());
-            stmt.setString(12, client.getCidade());
-            stmt.setString(13, client.getEstado());
+        stmt.setString(1, client.getNome());
+        stmt.setString(2, client.getRg());
+        stmt.setString(3, client.getCpf());
+        stmt.setString(4, client.getEmail());
+        stmt.setString(5, client.getTelefone());
+        stmt.setString(6, client.getCelular());
+        stmt.setString(7, client.getCep());
+        stmt.setString(8, client.getEndereco());
+        stmt.setInt(9, client.getNumero());
+        stmt.setString(10, client.getComplemento());
+        stmt.setString(11, client.getBairro());
+        stmt.setString(12, client.getCidade());
+        stmt.setString(13, client.getEstado());
 
-            stmt.setInt(14, client.getId());
+        stmt.setInt(14, client.getId());
 
-            stmt.execute();
+        stmt.execute();
 
-            JOptionPane.showMessageDialog(null, "Cliente atualizado com sucesso");
-        } catch (SQLException e) {
-            JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
-                e,
-                "Erro ao tentar atualizado o cliente:"
-            );
+        // JOptionPane.showMessageDialog(null, "Cliente atualizado com sucesso");
 
-            JOptionPane.showMessageDialog(
-                null,
-                errorTxtArea,
-                "Erro",
-                JOptionPane.ERROR_MESSAGE
-            );
-        }
+        // catch (SQLException e) {
+//            JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
+//                e,
+//                "Erro ao tentar atualizado o cliente:"
+//            );
+//
+//            JOptionPane.showMessageDialog(
+//                null,
+//                errorTxtArea,
+//                "Erro",
+//                JOptionPane.ERROR_MESSAGE
+//            );
+        // }
     }
 
-    public void delete(ClientModel client) {
-        try {
-            PreparedStatement stmt = connection.prepareStatement(
-                SQL_DELETE_QUERY
-            );
-            stmt.setInt(1, client.getId());
+    public void delete(ClientModel client) throws SQLException {
+        PreparedStatement stmt = connection.prepareStatement(
+            SQL_DELETE_QUERY
+        );
+        stmt.setInt(1, client.getId());
 
-            stmt.execute();
+        stmt.execute();
 
-            JOptionPane.showMessageDialog(null, "Cliente excluído com sucesso");
-        } catch (SQLException e) {
-            JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
-                e,
-                "Erro ao tentar excluir o novo cliente:"
-            );
-
-            JOptionPane.showMessageDialog(
-                null,
-                errorTxtArea,
-                "Erro",
-                JOptionPane.ERROR_MESSAGE
-            );
-        }
+//        JOptionPane.showMessageDialog(null, "Cliente excluído com sucesso");
+//        catch (SQLException e) {
+//            JTextArea errorTxtArea = getErrorDialogJTextAreaContent(
+//                e,
+//                "Erro ao tentar excluir o novo cliente:"
+//            );
+//
+//            JOptionPane.showMessageDialog(
+//                null,
+//                errorTxtArea,
+//                "Erro",
+//                JOptionPane.ERROR_MESSAGE
+//            );
+//        }
     }
 }
