@@ -1,7 +1,7 @@
-package com.pancotti.henrique.sales.management.view;
+package dev.pancotti.henrique.crm.view;
 
-import com.pancotti.henrique.sales.management.dao.ClientDAO;
-import com.pancotti.henrique.sales.management.model.ClientModel;
+import dev.pancotti.henrique.crm.dao.ClientDAO;
+import dev.pancotti.henrique.crm.model.ClientModel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,7 +17,7 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 
-import static com.pancotti.henrique.sales.management.util.UIUtil.getErrorDialogJTextAreaContent;
+import static dev.pancotti.henrique.crm.util.UIUtil.getErrorDialogJTextAreaContent;
 
 public class ClientForm {
     private static final int V_GAP_MAX_HEIGHT = 25;

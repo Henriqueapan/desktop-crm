@@ -1,4 +1,4 @@
-package com.pancotti.henrique.sales.management.jdbc;
+package dev.pancotti.henrique.crm.jdbc;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

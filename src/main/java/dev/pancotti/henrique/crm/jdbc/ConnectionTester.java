@@ -1,7 +1,7 @@
-package com.pancotti.henrique.sales.management.jdbc;
+package dev.pancotti.henrique.crm.jdbc;
 
-import com.pancotti.henrique.sales.management.dao.ClientDAO;
-import com.pancotti.henrique.sales.management.model.ClientModel;
+import dev.pancotti.henrique.crm.dao.ClientDAO;
+import dev.pancotti.henrique.crm.model.ClientModel;
 
 import javax.swing.*;
 import java.sql.SQLException;

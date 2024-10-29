@@ -1,6 +1,6 @@
 import javax.swing.*;
 
-import com.pancotti.henrique.sales.management.view.ClientForm;
+import dev.pancotti.henrique.crm.view.ClientForm;
 import mdlaf.MaterialLookAndFeel;
 import mdlaf.themes.JMarsDarkTheme;
 

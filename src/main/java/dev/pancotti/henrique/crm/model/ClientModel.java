@@ -1,4 +1,4 @@
-package com.pancotti.henrique.sales.management.model;
+package dev.pancotti.henrique.crm.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

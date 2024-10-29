@@ -1,4 +1,4 @@
-package com.pancotti.henrique.sales.management.util;
+package dev.pancotti.henrique.crm.util;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

@@ -1,7 +1,7 @@
-package com.pancotti.henrique.sales.management.dao;
+package dev.pancotti.henrique.crm.dao;
 
-import com.pancotti.henrique.sales.management.jdbc.ConnectionFactory;
-import com.pancotti.henrique.sales.management.model.ClientModel;
+import dev.pancotti.henrique.crm.jdbc.ConnectionFactory;
+import dev.pancotti.henrique.crm.model.ClientModel;
 
 import javax.swing.*;
 import java.sql.Connection;
@@ -10,8 +10,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.pancotti.henrique.sales.management.util.UIUtil.getErrorDialogJTextAreaContent;
 
 public class ClientDAO {
     // TODO: Remover chamadas para levantar dialogo de erro do DAO
