@@ -94,8 +94,6 @@ public class ClientDAO {
         stmt.setString(13, client.getEstado());
 
         stmt.execute();
-
-        JOptionPane.showMessageDialog(null, "Cliente cadastrado com sucesso");
     }
 
     public List<ClientModel> findAll() throws SQLException {
